@@ -58,9 +58,9 @@ Location Name Extraction:
 - Preserve the language and spelling used in the query
 
 Location Disambiguation:
-- For ambiguous locations, include parent_context (e.g., "Paris, France" vs "Paris, Texas")
-- Prefer more populated/prominent locations unless context suggests otherwise
-- Use parent_context to help disambiguate when needed
+- Location ambiguity (e.g., "Paris" could be Paris, France or Paris, Texas) is handled by the geodata/geocoding layer
+- Preserve location names exactly as mentioned in the query without trying to disambiguate
+- The downstream geocoding service will handle ranking and disambiguation based on context, population, and prominence
 
 Distance Extraction:
 - Extract explicit distances: "within 5km" → explicit_distance=5000

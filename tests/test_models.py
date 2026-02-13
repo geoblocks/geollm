@@ -42,7 +42,6 @@ def test_reference_location():
     location = ReferenceLocation(
         name="Lausanne",
         type="city",
-        parent_context=None,
     )
     assert location.name == "Lausanne"
 
@@ -105,7 +104,6 @@ def test_geo_query_containment():
         reference_location=ReferenceLocation(
             name="Bern",
             type="city",
-            parent_context=None,
         ),
         buffer_config=None,
         confidence_breakdown=ConfidenceScore(
@@ -133,7 +131,6 @@ def test_geo_query_buffer_requires_config():
             reference_location=ReferenceLocation(
                 name="Bern",
                 type="city",
-                parent_context=None,
             ),
             buffer_config=None,  # Missing config!
             confidence_breakdown=ConfidenceScore(
@@ -159,7 +156,6 @@ def test_geo_query_containment_no_buffer_config():
             reference_location=ReferenceLocation(
                 name="Bern",
                 type="city",
-                parent_context=None,
             ),
             buffer_config=BufferConfig(  # Should not be present!
                 distance_m=1000,
@@ -189,7 +185,6 @@ def test_geo_query_serialization():
         reference_location=ReferenceLocation(
             name="Bern",
             type="city",
-            parent_context=None,
         ),
         buffer_config=None,
         confidence_breakdown=ConfidenceScore(

@@ -274,7 +274,6 @@ ReferenceLocation(
     name: str,                          # Location name as mentioned in query
     type: str,                          # "city", "lake", "region" (optional)
     type_confidence: float,             # Confidence in type (0-1)
-    parent_context: Optional[str]       # Parent location for disambiguation
 )
 
 BufferConfig(

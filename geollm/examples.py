@@ -51,7 +51,6 @@ EXAMPLES: list[ExampleQuery] = [
             reference_location=ReferenceLocation(
                 name="Bern",
                 type="city",
-                parent_context=None,
             ),
             buffer_config=None,
             confidence_breakdown=ConfidenceScore(
@@ -74,7 +73,6 @@ EXAMPLES: list[ExampleQuery] = [
             reference_location=ReferenceLocation(
                 name="Zürich",
                 type="city",
-                parent_context="Switzerland",
             ),
             buffer_config=None,
             confidence_breakdown=ConfidenceScore(
@@ -97,7 +95,6 @@ EXAMPLES: list[ExampleQuery] = [
             reference_location=ReferenceLocation(
                 name="Lausanne",
                 type="city",
-                parent_context=None,
             ),
             buffer_config=None,
             confidence_breakdown=ConfidenceScore(
@@ -120,7 +117,6 @@ EXAMPLES: list[ExampleQuery] = [
             reference_location=ReferenceLocation(
                 name="Lake Geneva",
                 type="lake",
-                parent_context=None,
             ),
             buffer_config=BufferConfig(distance_m=5000, buffer_from="center", ring_only=False, inferred=True),
             confidence_breakdown=ConfidenceScore(
@@ -143,7 +139,6 @@ EXAMPLES: list[ExampleQuery] = [
             reference_location=ReferenceLocation(
                 name="Bern",
                 type="city",
-                parent_context=None,
             ),
             buffer_config=BufferConfig(distance_m=-500, buffer_from="boundary", ring_only=False, inferred=True),
             confidence_breakdown=ConfidenceScore(
@@ -166,7 +161,6 @@ EXAMPLES: list[ExampleQuery] = [
             reference_location=ReferenceLocation(
                 name="Zurich",
                 type="city",
-                parent_context="Switzerland",
             ),
             buffer_config=None,
             confidence_breakdown=ConfidenceScore(
@@ -189,7 +183,6 @@ EXAMPLES: list[ExampleQuery] = [
             reference_location=ReferenceLocation(
                 name="train station",
                 type="train_station",
-                parent_context=None,
             ),
             buffer_config=BufferConfig(distance_m=5000, buffer_from="center", ring_only=False, inferred=True),
             confidence_breakdown=ConfidenceScore(
@@ -212,7 +205,6 @@ EXAMPLES: list[ExampleQuery] = [
             reference_location=ReferenceLocation(
                 name="Lausanne",
                 type="city",
-                parent_context=None,
             ),
             buffer_config=BufferConfig(distance_m=2000, buffer_from="center", ring_only=False, inferred=False),
             confidence_breakdown=ConfidenceScore(
@@ -235,7 +227,6 @@ EXAMPLES: list[ExampleQuery] = [
             reference_location=ReferenceLocation(
                 name="Lausanne",
                 type="city",
-                parent_context=None,
             ),
             buffer_config=None,
             confidence_breakdown=ConfidenceScore(
@@ -258,7 +249,6 @@ EXAMPLES: list[ExampleQuery] = [
             reference_location=ReferenceLocation(
                 name="Lake Geneva",
                 type="lake",
-                parent_context=None,
             ),
             buffer_config=BufferConfig(distance_m=5000, buffer_from="center", ring_only=False, inferred=True),
             confidence_breakdown=ConfidenceScore(
@@ -282,7 +272,6 @@ EXAMPLES: list[ExampleQuery] = [
                 name="Zurich main railway station",
                 type="train_station",
                 type_confidence=0.95,
-                parent_context=None,
             ),
             buffer_config=BufferConfig(distance_m=1000, buffer_from="center", ring_only=False, inferred=False),
             confidence_breakdown=ConfidenceScore(
@@ -306,7 +295,6 @@ EXAMPLES: list[ExampleQuery] = [
                 name="Lake Geneva",
                 type="lake",
                 type_confidence=0.95,
-                parent_context=None,
             ),
             buffer_config=BufferConfig(distance_m=5000, buffer_from="center", ring_only=False, inferred=False),
             confidence_breakdown=ConfidenceScore(
@@ -330,7 +318,6 @@ EXAMPLES: list[ExampleQuery] = [
                 name="Zurich main railway station",
                 type="train_station",
                 type_confidence=0.95,
-                parent_context=None,
             ),
             buffer_config=BufferConfig(distance_m=800, buffer_from="center", ring_only=False, inferred=False),
             confidence_breakdown=ConfidenceScore(
@@ -354,7 +341,6 @@ EXAMPLES: list[ExampleQuery] = [
                 name="Lake Geneva",
                 type="lake",
                 type_confidence=0.95,
-                parent_context=None,
             ),
             buffer_config=BufferConfig(distance_m=5000, buffer_from="center", ring_only=False, inferred=False),
             confidence_breakdown=ConfidenceScore(

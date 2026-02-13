@@ -49,12 +49,6 @@ class ReferenceLocation(BaseModel):
         "(e.g., 'Bern', 'Rhone'). Use spatial relation as hint: 'along X' → river/road, "
         "'in X' → city/region, 'on X' → lake/mountain.",
     )
-    # FIXME: is it useful ?
-    parent_context: str | None = Field(
-        None,
-        description="Parent location for disambiguation. For example: 'France' for 'Paris, France' "
-        "vs 'Texas' for 'Paris, Texas'. Include when the location name could be ambiguous.",
-    )
 
 
 class BufferConfig(BaseModel):
