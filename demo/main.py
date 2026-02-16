@@ -26,10 +26,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize GeoLLM components
-llm = ChatOpenAI(model="gpt-4o", temperature=0)
-parser = GeoFilterParser(llm)
-
 # Data source configuration
 SWISSNAMES3D_PATH = os.getenv("SWISSNAMES3D_PATH", "data")
 
@@ -40,6 +36,10 @@ if not os.path.exists(SWISSNAMES3D_PATH):
 
 print(f"Loading SwissNames3D from {SWISSNAMES3D_PATH}...")
 datasource = SwissNames3DSource(SWISSNAMES3D_PATH)
+
+# Initialize GeoLLM components
+llm = ChatOpenAI(model="gpt-4o", temperature=0)
+parser = GeoFilterParser(llm, datasource=datasource)
 
 
 class QueryRequest(BaseModel):
