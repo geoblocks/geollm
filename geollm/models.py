@@ -24,8 +24,8 @@ class ConfidenceScore(BaseModel):
     )
     reasoning: str | None = Field(
         None,
-        description="Explanation for confidence scores, especially if < 0.7. "
-        "For example: 'Ambiguous location name', 'Unclear spatial relationship', etc.",
+        description="Explanation for confidence scores. Always include reasoning for clarity and debugging. "
+        "For example: 'Ambiguous location name', 'Unclear spatial relationship', 'High confidence in location matching', etc.",
     )
 
 

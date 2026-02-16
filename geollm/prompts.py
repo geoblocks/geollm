@@ -112,7 +112,7 @@ Buffer Configuration:
 Confidence Scoring:
 - overall: 0.9-1.0 = highly confident, 0.7-0.9 = confident, 0.5-0.7 = uncertain, <0.5 = very uncertain
 - Break down: location_confidence, relation_confidence
-- Include reasoning for confidence < 0.7
+- Always include reasoning to explain confidence scores and aid debugging
 - Lower confidence for:
   * Ambiguous location names
   * Unclear spatial relationships
