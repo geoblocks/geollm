@@ -15,6 +15,7 @@ import geopandas as gpd
 import pyproj
 from rapidfuzz import fuzz
 from shapely.geometry import mapping
+from shapely.ops import transform as shapely_transform
 
 # CH1903+ (LV95) to WGS84 transformer - data is assumed to always be in EPSG:2056
 _TRANSFORMER = pyproj.Transformer.from_crs("EPSG:2056", "EPSG:4326", always_xy=True)
@@ -302,8 +303,6 @@ class SwissNames3DSource:
             bbox = None
         else:
             # Transform geometry from EPSG:2056 to WGS84 using the module-level transformer
-            from shapely.ops import transform as shapely_transform
-
             wgs84_geom = shapely_transform(_TRANSFORMER.transform, geom)
             geometry = mapping(wgs84_geom)
             bounds = wgs84_geom.bounds  # (minx, miny, maxx, maxy)

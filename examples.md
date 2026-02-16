@@ -16,3 +16,5 @@ Between Lausanne and Geneva
 South west of Lausanne
 
 10 minutes walk from Lausanne
+
+le long de l'Orbe
