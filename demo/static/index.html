@@ -5,20 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GeoLLM Demo</title>
     <!-- OpenLayers CSS -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/ol@v10.8.0/ol.css"
-      type="text/css"
-    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.8.0/ol.css" type="text/css" />
     <style>
       body,
       html {
         margin: 0;
         padding: 0;
         height: 100%;
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-          Arial, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       }
       #map {
         width: 100%;
@@ -34,15 +28,19 @@
         transform: translateX(-50%);
         z-index: 1000;
         background: white;
-        padding: 10px;
+        padding: 15px;
         border-radius: 8px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        min-width: 600px;
+      }
+      .search-input-row {
         display: flex;
         gap: 10px;
+        margin-bottom: 10px;
       }
       input[type="text"] {
         padding: 10px;
-        width: 500px;
+        flex: 1;
         border: 1px solid #ccc;
         border-radius: 4px;
         font-size: 16px;
@@ -59,11 +57,53 @@
       button:hover {
         background: #0056b3;
       }
+      button:disabled {
+        background: #cccccc;
+        cursor: not-allowed;
+      }
+      .mode-toggle {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .mode-toggle label {
+        font-size: 14px;
+      }
       #status {
         margin-top: 10px;
         font-size: 14px;
         color: #666;
-        text-align: center;
+      }
+      #reasoning-box {
+        margin-top: 10px;
+        padding: 10px;
+        background: #f5f5f5;
+        border-radius: 4px;
+        max-height: 150px;
+        overflow-y: auto;
+        font-size: 13px;
+        display: none;
+      }
+      #reasoning-box.active {
+        display: block;
+      }
+      .reasoning-item {
+        margin: 5px 0;
+        padding: 5px;
+        background: white;
+        border-left: 3px solid #007bff;
+        animation: fadeIn 0.3s;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
       .error {
         color: red;
@@ -72,14 +112,15 @@
   </head>
   <body>
     <div class="search-container">
-      <input
-        type="text"
-        id="queryInput"
-        placeholder="e.g., in the heart of Bern"
-        value="in the heart of Bern"
-      />
-      <button onclick="executeQuery()">Search</button>
+      <div class="mode-toggle">
+        <label> <input type="checkbox" id="streamMode" /> Enable streaming mode (show AI reasoning) </label>
+      </div>
+      <div class="search-input-row">
+        <input type="text" id="queryInput" placeholder="e.g., in the heart of Bern" value="in the heart of Bern" />
+        <button onclick="executeQuery()" id="searchBtn">Search</button>
+      </div>
       <div id="status"></div>
+      <div id="reasoning-box"></div>
     </div>
     <div id="map"></div>
 
@@ -107,28 +148,28 @@
         source: vectorSource,
         style: [
           {
-            filter: ['==', ['get', 'role'], 'search_area'],
+            filter: ["==", ["get", "role"], "search_area"],
             style: {
-              'stroke-color': '#03B000',
-              'stroke-width': 3,
-              'fill-color': 'rgba(3, 176, 0, 0.15)',
-              'circle-radius': 7,
-              'circle-fill-color': '#03B000',
-              'circle-stroke-color': '#029000',
-              'circle-stroke-width': 2,
+              "stroke-color": "#03B000",
+              "stroke-width": 3,
+              "fill-color": "rgba(3, 176, 0, 0.15)",
+              "circle-radius": 7,
+              "circle-fill-color": "#03B000",
+              "circle-stroke-color": "#029000",
+              "circle-stroke-width": 2,
             },
           },
           {
             // Default style for reference features
-            filter: ['!=', ['get', 'role'], 'search_area'],
+            filter: ["!=", ["get", "role"], "search_area"],
             style: {
-              'stroke-color': '#8E8B8B',
-              'stroke-width': 2,
-              'fill-color': 'rgba(3, 0, 176, 0.1)',
-              'circle-radius': 5,
-              'circle-fill-color': '#CFCECD',
-              'circle-stroke-color': '#8E8B8B',
-              'circle-stroke-width': 1,
+              "stroke-color": "#8E8B8B",
+              "stroke-width": 2,
+              "fill-color": "rgba(3, 0, 176, 0.1)",
+              "circle-radius": 5,
+              "circle-fill-color": "#CFCECD",
+              "circle-stroke-color": "#8E8B8B",
+              "circle-stroke-width": 1,
             },
           },
         ],
@@ -138,55 +179,131 @@
       async function executeQuery() {
         const query = document.getElementById("queryInput").value;
         const statusDiv = document.getElementById("status");
+        const reasoningBox = document.getElementById("reasoning-box");
+        const searchBtn = document.getElementById("searchBtn");
+        const streamMode = document.getElementById("streamMode").checked;
+
         statusDiv.textContent = "Processing...";
         statusDiv.className = "";
+        reasoningBox.innerHTML = "";
+        reasoningBox.className = streamMode ? "active" : "";
+        searchBtn.disabled = true;
         vectorSource.clear();
 
         try {
-          const response = await fetch("/api/query", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ query: query }),
-          });
-
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || "Failed to process query");
-          }
-
-          const data = await response.json();
-
-          console.log(data.geo_query);
-
-          // Add features to map
-          const format = new ol.format.GeoJSON({
-            dataProjection: "EPSG:4326",
-            featureProjection: "EPSG:3857",
-          });
-
-          const features = format.readFeatures(data.result);
-          vectorSource.addFeatures(features);
-
-          // Zoom to extent
-          if (features.length > 0) {
-            const extent = vectorSource.getExtent();
-            map.getView().fit(extent, {
-              padding: [50, 50, 50, 50],
-              duration: 1000,
-              maxZoom: 14,
-            });
-
-            const relation = data.geo_query.spatial_relation.relation;
-            statusDiv.innerHTML = `Found: <strong>${data.geo_query.reference_location.name}</strong> (${relation})`;
+          if (streamMode) {
+            await executeQueryStream(query, statusDiv, reasoningBox);
           } else {
-            statusDiv.textContent = "No results found.";
+            await executeQueryRegular(query, statusDiv);
           }
         } catch (err) {
           statusDiv.textContent = err.message;
           statusDiv.className = "error";
           console.error(err);
+        } finally {
+          searchBtn.disabled = false;
+        }
+      }
+
+      async function executeQueryRegular(query, statusDiv) {
+        const response = await fetch("/api/query", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ query: query }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || "Failed to process query");
+        }
+
+        const data = await response.json();
+        displayResults(data, statusDiv);
+      }
+
+      async function executeQueryStream(query, statusDiv, reasoningBox) {
+        const response = await fetch("/api/query/stream", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ query: query }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to process query");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+
+          // Process all complete lines
+          buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const eventData = JSON.parse(line.substring(6));
+
+              if (eventData.type === "start") {
+                // Stream started - could add visual indicator here
+                statusDiv.textContent = "Processing query...";
+              } else if (eventData.type === "reasoning") {
+                // Add reasoning step
+                const reasoningItem = document.createElement("div");
+                reasoningItem.className = "reasoning-item";
+                reasoningItem.textContent = eventData.content;
+                reasoningBox.appendChild(reasoningItem);
+                reasoningBox.scrollTop = reasoningBox.scrollHeight;
+              } else if (eventData.type === "result") {
+                // Final result
+                displayResults(eventData.content, statusDiv);
+              } else if (eventData.type === "finish") {
+                // Stream completed successfully
+                console.log("Stream completed");
+              } else if (eventData.type === "error") {
+                throw new Error(eventData.content);
+              }
+            }
+          }
+        }
+      }
+
+      function displayResults(data, statusDiv) {
+        console.log(data.geo_query);
+
+        // Add features to map
+        const format = new ol.format.GeoJSON({
+          dataProjection: "EPSG:4326",
+          featureProjection: "EPSG:3857",
+        });
+
+        const features = format.readFeatures(data.result);
+        vectorSource.addFeatures(features);
+
+        // Zoom to extent
+        if (features.length > 0) {
+          const extent = vectorSource.getExtent();
+          map.getView().fit(extent, {
+            padding: [50, 50, 50, 50],
+            duration: 1000,
+            maxZoom: 14,
+          });
+
+          const relation = data.geo_query.spatial_relation.relation;
+          statusDiv.innerHTML = `Found: <strong>${data.geo_query.reference_location.name}</strong> (${relation})`;
+        } else {
+          statusDiv.textContent = "No results found.";
         }
       }
     </script>

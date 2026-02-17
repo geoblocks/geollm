@@ -2,6 +2,7 @@
 Main parser class for natural language geographic query parsing.
 """
 
+from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Literal
 
 from langchain_core.language_models import BaseChatModel
@@ -204,6 +205,118 @@ class GeoFilterParser:
         )
 
         return geo_query
+
+    async def parse_stream(self, query: str) -> AsyncGenerator[dict]:
+        """
+        Parse a natural language location query with streaming reasoning and results.
+
+        This method provides real-time feedback during the parsing process by yielding
+        intermediate reasoning steps and the final GeoQuery result. This is useful for
+        providing users with transparency into the LLM's decision-making process and
+        for building responsive UIs.
+
+        The stream yields dictionaries with the following event types:
+        - {"type": "start"} - Stream started
+        - {"type": "reasoning", "content": str} - Intermediate processing steps
+        - {"type": "data-response", "content": dict} - Final GeoQuery as JSON
+        - {"type": "error", "content": str} - Errors encountered during processing
+        - {"type": "finish"} - Stream completed successfully
+
+        Args:
+            query: Natural language query in any language
+
+        Yields:
+            dict: Stream events with type and optional content fields
+
+        Raises:
+            ParsingError: If LLM fails to parse query into valid structure
+            ValidationError: If parsed query fails business logic validation
+            UnknownRelationError: If spatial relation is not registered
+            LowConfidenceError: If confidence below threshold (strict mode only)
+
+        Examples:
+            Basic usage with async iteration:
+            >>> async for event in parser.parse_stream("restaurants near Lake Geneva"):
+            ...     if event["type"] == "reasoning":
+            ...         print(f"Reasoning: {event['content']}")
+            ...     elif event["type"] == "data-response":
+            ...         geo_query = event["content"]
+            ...         print(f"Location: {geo_query['reference_location']['name']}")
+            ...     elif event["type"] == "error":
+            ...         print(f"Error: {event['content']}")
+
+            Using in a FastAPI streaming endpoint:
+            >>> from fastapi.responses import StreamingResponse
+            >>> @app.get("/stream")
+            >>> async def stream_endpoint(q: str):
+            ...     async def event_stream():
+            ...         async for event in parser.parse_stream(q):
+            ...             yield f"data: {json.dumps(event)}\\n\\n"
+            ...     return StreamingResponse(event_stream(), media_type="text/event-stream")
+        """
+        try:
+            # Signal start of stream
+            yield {"type": "start"}
+
+            yield {"type": "reasoning", "content": "Preparing query for LLM processing"}
+            formatted_messages = self.prompt.format_messages(query=query)
+
+            yield {"type": "reasoning", "content": "Analyzing spatial relationship and location"}
+            try:
+                response = self.structured_llm.invoke(formatted_messages)
+            except Exception as e:
+                yield {"type": "error", "content": f"LLM invocation failed: {str(e)}"}
+                raise ParsingError(
+                    message=f"LLM invocation failed: {str(e)}",
+                    raw_response="",
+                    original_error=e,
+                ) from e
+
+            yield {"type": "reasoning", "content": "Parsing LLM response into structured format"}
+            parsed = response.get("parsed") if isinstance(response, dict) else response
+
+            if parsed is None:
+                raw = response.get("raw", "") if isinstance(response, dict) else ""
+                error = response.get("parsing_error") if isinstance(response, dict) else None
+                yield {"type": "error", "content": "Failed to parse response - invalid JSON or missing fields"}
+                raise ParsingError(
+                    message="Failed to parse query into structured format. "
+                    "LLM may have returned invalid JSON or missed required fields.",
+                    raw_response=str(raw),
+                    original_error=error,
+                )
+
+            geo_query = parsed
+            assert isinstance(geo_query, GeoQuery), "Parsed result must be GeoQuery"
+
+            # Ensure original_query is set correctly
+            if not geo_query.original_query or geo_query.original_query != query:
+                geo_query.original_query = query
+
+            if geo_query.confidence_breakdown.reasoning:
+                yield {
+                    "type": "reasoning",
+                    "content": f"LLM reasoning: {geo_query.confidence_breakdown.reasoning}",
+                }
+
+            yield {"type": "reasoning", "content": "Validating spatial relation configuration"}
+            geo_query = validate_query(
+                geo_query,
+                self.spatial_config,
+                confidence_threshold=self.confidence_threshold,
+                strict_mode=self.strict_mode,
+            )
+
+            yield {"type": "reasoning", "content": "Query parsing completed successfully"}
+            yield {"type": "data-response", "content": geo_query.model_dump()}
+
+            # Signal successful completion
+            yield {"type": "finish"}
+
+        except Exception as e:
+            # Emit error event before re-raising
+            yield {"type": "error", "content": f"Error during parsing: {str(e)}"}
+            raise
 
     def parse_batch(self, queries: list[str]) -> list[GeoQuery]:
         """
