@@ -15,6 +15,7 @@ It uses Large Language Models (LLMs) to understand multilingual queries and extr
 - **Multilingual Support**: Parse queries in English, German, French, Italian, and more
 - **Rich Spatial Relations**: Support for containment, buffer, and directional queries
 - **Structured Output**: Pydantic models with full type safety
+- **Streaming Support**: Real-time feedback with reasoning transparency for responsive UIs
 - **Flexible Configuration**: Customizable spatial relations and confidence thresholds
 - **LLM Provider Agnostic**: Works with OpenAI, Anthropic, or local models
 
@@ -82,12 +83,21 @@ The API will be available at `http://localhost:8000`.
 **Making a query:**
 
 ```bash
+# Standard endpoint (returns complete result)
 curl -X POST http://localhost:8000/api/query \
   -H "Content-Type: application/json" \
   -d '{"query": "north of Lausanne"}'
+
+# Streaming endpoint (returns Server-Sent Events)
+curl -X POST http://localhost:8000/api/query/stream \
+  -H "Content-Type: application/json" \
+  -d '{"query": "north of Lausanne"}' \
+  --no-buffer
 ```
 
 Response: A GeoJSON FeatureCollection containing the parsed geographic query, spatial relation, and computed search areas.
+
+The web UI at `http://localhost:8000` includes a toggle to enable streaming mode with real-time reasoning display.
 
 ## Quick Start
 
@@ -144,6 +154,7 @@ Main class for parsing queries.
 **Methods:**
 
 - `parse(query: str) -> GeoQuery`: Parse a single query
+- `parse_stream(query: str) -> AsyncGenerator[dict]`: Parse with streaming events
 - `parse_batch(queries: List[str]) -> List[GeoQuery]`: Parse multiple queries
 - `get_available_relations(category: Optional[str]) -> List[str]`: List available relations
 - `describe_relation(name: str) -> str`: Get relation description
