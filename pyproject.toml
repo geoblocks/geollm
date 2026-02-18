@@ -39,7 +39,7 @@ select = ["F", "I", "E", "W", "UP", "C4", "ARG"]
 ignore = ["E501"]
 
 [tool.setuptools]
-packages = ["geollm"]
+packages = { find = { where = ["."], include = ["geollm*"] } }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
