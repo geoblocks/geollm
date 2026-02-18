@@ -32,7 +32,6 @@ It uses Large Language Models (LLMs) to understand multilingual queries and extr
 - Feature/activity identification: "hiking", "restaurants", "hotels"
 - Attribute filtering: "with children", "vegetarian", "4-star"
 - Search execution or database queries
-- Geometry resolution (Phase 1 - planned for Phase 2+)
 
 **Integration Pattern:**
 Parent application handles feature/activity filtering and combines it with GeoLLM's geographic filter for complete search functionality.
@@ -172,7 +171,7 @@ Structured output model representing the parsed geographic filter.
 - `confidence_breakdown`: Confidence scores
 - `original_query`: Original input text
 
-**Note:** Phase 1 returns only structured filter criteria. Phase 2+ will add geometry resolution (converting locations to actual polygons).
+**Note:** GeoLLM is fully implemented with three integrated layers: parsing, geographic resolution via datasources, and spatial operations. The demo API shows a complete end-to-end workflow that resolves locations and computes search areas.
 
 ## Available Spatial Relations
 

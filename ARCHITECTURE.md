@@ -38,7 +38,41 @@ Parent System → Database Query: WHERE activity='hiking' AND ST_Intersects(loca
 
 ---
 
-## Component Overview
+## Complete Example Workflow
+
+Here's what happens when you query "north of Lausanne" in the demo:
+
+```
+1. INPUT: "north of Lausanne"
+   ↓
+2. PARSER (Layer 1)
+   - Extracts: spatial_relation="north_of", reference_location="Lausanne"
+   - Confidence: 0.95
+   - Buffer: 10000m (default for directional)
+   ↓
+3. DATASOURCE (Layer 2) 
+   - Searches: name="Lausanne", type="settlement" (inferred)
+   - Finds: Point(6.63, 46.52) in WGS84
+   - Confidence: 1.0 (exact match)
+   ↓
+4. SPATIAL OPERATIONS (Layer 3)
+   - Centroid: (6.63, 46.52)
+   - Direction: North (0°)
+   - Creates: 90° sector polygon extending 10km north
+   ↓
+5. OUTPUT: GeoJSON FeatureCollection
+   {
+     "type": "FeatureCollection",
+     "features": [
+       { "id": "reference", "geometry": Point, ... },     // Lausanne point
+       { "id": "search_area", "geometry": Polygon, ... }  // North sector
+     ]
+   }
+```
+
+---
+
+
 
 ### 1. GeoFilterParser (Layer 1)
 
@@ -214,9 +248,22 @@ geollm/
 
 ---
 
-## Status
+## Implementation Status
 
-- ✅ **Layer 1 (Parser)**: Complete
-- ✅ **Layer 2 (Datasource)**: Complete (SwissNames3D implemented)
-- ✅ **Layer 3 (Spatial)**: Complete (Shapely-based ops)
-- ✅ **Integration**: Full flow implemented
+All three layers are **fully implemented and integrated**:
+
+- ✅ **Layer 1 (Parser)**: Complete - Extracts spatial relations from natural language using LLM
+- ✅ **Layer 2 (Datasource)**: Complete - SwissNames3D resolves location names to WGS84 geometries
+- ✅ **Layer 3 (Spatial Operations)**: Complete - Transforms geometries using spatial relations (buffers, directional sectors, etc.)
+- ✅ **Integration**: Full end-to-end workflow with demo API server
+
+The demo API at `/demo/main.py` demonstrates the complete pipeline:
+```
+Query → Parser → Datasource → Spatial Ops → GeoJSON Result
+```
+
+## Not Yet Implemented
+
+- Additional datasource implementations (beyond SwissNames3D)
+- Complex query types: `compound` (multi-step), `split` (area division), `boolean` (AND/OR/NOT)
+- Some edge cases in spatial operations
