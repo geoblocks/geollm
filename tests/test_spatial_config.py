@@ -17,8 +17,8 @@ def test_default_relations_loaded():
 
     # Check buffer relations
     assert config.has_relation("near")
-    assert config.has_relation("around")
     assert config.has_relation("on_shores_of")
+    assert config.has_relation("along")
     assert config.has_relation("in_the_heart_of")
 
     # Check cardinal directional relations

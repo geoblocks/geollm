@@ -113,14 +113,14 @@ Standard GeoJSON dictionary structure:
 
 ---
 
-## Spatial Relations (12 Total)
+## Spatial Relations (10 Total)
 
 | Category | Relations | Behavior |
 |----------|-----------|----------|
 | **Containment** | `in` | Exact geometry match |
-| **Buffer** | `near`, `around`, `along` | Circular/Linear buffer |
+| **Buffer** | `near`, `along` | Circular/Linear buffer with context-aware distances |
 | **Ring** | `on_shores_of` | Buffer - Original (Donut) |
-| **Erosion** | `in_the_heart_of`, `deep_inside` | Negative buffer (shrink) |
+| **Erosion** | `in_the_heart_of` | Negative buffer (shrink) with context-aware depth |
 | **Directional** | `north_of`, `south_of`, ... | 90° Sector Wedge |
 
 ---

@@ -51,6 +51,7 @@ EXAMPLES: list[ExampleQuery] = [
             reference_location=ReferenceLocation(
                 name="Bern",
                 type="city",
+                type_confidence=0.95,
             ),
             buffer_config=None,
             confidence_breakdown=ConfidenceScore(
@@ -71,8 +72,9 @@ EXAMPLES: list[ExampleQuery] = [
             query_type="simple",
             spatial_relation=SpatialRelation(relation="in", category="containment", explicit_distance=None),
             reference_location=ReferenceLocation(
-                name="Zürich",
+                name="Bern",
                 type="city",
+                type_confidence=0.95,
             ),
             buffer_config=None,
             confidence_breakdown=ConfidenceScore(
@@ -95,6 +97,7 @@ EXAMPLES: list[ExampleQuery] = [
             reference_location=ReferenceLocation(
                 name="Lausanne",
                 type="city",
+                type_confidence=0.95,
             ),
             buffer_config=None,
             confidence_breakdown=ConfidenceScore(
@@ -106,24 +109,25 @@ EXAMPLES: list[ExampleQuery] = [
             original_query="restaurants à Lausanne",
         ),
     ),
-    # Example 4: Buffer query (English)
+    # Example 4: Buffer query with LLM-inferred distance (English)
     ExampleQuery(
         input="near Lake Geneva",
         language="en",
-        description="Proximity buffer query",
+        description="Proximity buffer query - LLM infers 5km distance based on medium feature scale (lake)",
         output=GeoQuery(
             query_type="simple",
-            spatial_relation=SpatialRelation(relation="near", category="buffer", explicit_distance=None),
+            spatial_relation=SpatialRelation(relation="near", category="buffer", explicit_distance=5000),
             reference_location=ReferenceLocation(
                 name="Lake Geneva",
                 type="lake",
+                type_confidence=0.95,
             ),
-            buffer_config=BufferConfig(distance_m=5000, buffer_from="center", ring_only=False, inferred=True),
+            buffer_config=BufferConfig(distance_m=5000, buffer_from="center", ring_only=False, inferred=False),
             confidence_breakdown=ConfidenceScore(
                 overall=0.88,
                 location_confidence=0.90,
                 relation_confidence=0.85,
-                reasoning=None,
+                reasoning="Medium-scale feature (lake) → 5km proximity radius inferred by LLM",
             ),
             original_query="near Lake Geneva",
         ),
@@ -139,6 +143,7 @@ EXAMPLES: list[ExampleQuery] = [
             reference_location=ReferenceLocation(
                 name="Bern",
                 type="city",
+                type_confidence=0.95,
             ),
             buffer_config=BufferConfig(distance_m=-500, buffer_from="boundary", ring_only=False, inferred=True),
             confidence_breakdown=ConfidenceScore(
@@ -159,8 +164,9 @@ EXAMPLES: list[ExampleQuery] = [
             query_type="simple",
             spatial_relation=SpatialRelation(relation="north_of", category="directional", explicit_distance=None),
             reference_location=ReferenceLocation(
-                name="Zurich",
+                name="Zürich",
                 type="city",
+                type_confidence=0.95,
             ),
             buffer_config=BufferConfig(distance_m=10000, buffer_from="center", ring_only=False, inferred=True),
             confidence_breakdown=ConfidenceScore(
@@ -172,24 +178,25 @@ EXAMPLES: list[ExampleQuery] = [
             original_query="north of Zurich",
         ),
     ),
-    # Example 7: Query with subject near generic reference (English)
+    # Example 7: Query with subject near generic reference - context-aware distance (English)
     ExampleQuery(
         input="cafés near the train station",
         language="en",
-        description="Subject 'cafés' ignored - only geographic filter 'near the train station' extracted",
+        description="Subject 'cafés' ignored - only geographic filter 'near the train station' extracted. LLM infers 1km distance based on small feature scale (train station)",
         output=GeoQuery(
             query_type="simple",
-            spatial_relation=SpatialRelation(relation="near", category="buffer", explicit_distance=None),
+            spatial_relation=SpatialRelation(relation="near", category="buffer", explicit_distance=1000),
             reference_location=ReferenceLocation(
                 name="train station",
                 type="train_station",
+                type_confidence=0.70,
             ),
-            buffer_config=BufferConfig(distance_m=5000, buffer_from="center", ring_only=False, inferred=True),
+            buffer_config=BufferConfig(distance_m=1000, buffer_from="center", ring_only=False, inferred=False),
             confidence_breakdown=ConfidenceScore(
                 overall=0.75,
                 location_confidence=0.70,
                 relation_confidence=0.80,
-                reasoning="Generic 'train station' without specific location - ambiguous reference",
+                reasoning="Small feature (train station) context → 1km buffer inferred by LLM. Generic location reference reduces overall confidence.",
             ),
             original_query="cafés near the train station",
         ),
@@ -205,6 +212,7 @@ EXAMPLES: list[ExampleQuery] = [
             reference_location=ReferenceLocation(
                 name="Lausanne",
                 type="city",
+                type_confidence=0.95,
             ),
             buffer_config=BufferConfig(distance_m=2000, buffer_from="center", ring_only=False, inferred=False),
             confidence_breakdown=ConfidenceScore(
@@ -227,6 +235,7 @@ EXAMPLES: list[ExampleQuery] = [
             reference_location=ReferenceLocation(
                 name="Lausanne",
                 type="city",
+                type_confidence=0.95,
             ),
             buffer_config=BufferConfig(distance_m=10000, buffer_from="center", ring_only=False, inferred=True),
             confidence_breakdown=ConfidenceScore(
@@ -242,20 +251,21 @@ EXAMPLES: list[ExampleQuery] = [
     ExampleQuery(
         input="Hiking with children near Lake Geneva",
         language="en",
-        description="Activity 'Hiking with children' completely ignored - only 'near Lake Geneva' extracted",
+        description="Activity 'Hiking with children' completely ignored - only 'near Lake Geneva' extracted. LLM infers 5km based on medium feature scale (lake)",
         output=GeoQuery(
             query_type="simple",
-            spatial_relation=SpatialRelation(relation="near", category="buffer", explicit_distance=None),
+            spatial_relation=SpatialRelation(relation="near", category="buffer", explicit_distance=5000),
             reference_location=ReferenceLocation(
                 name="Lake Geneva",
                 type="lake",
+                type_confidence=0.95,
             ),
-            buffer_config=BufferConfig(distance_m=5000, buffer_from="center", ring_only=False, inferred=True),
+            buffer_config=BufferConfig(distance_m=5000, buffer_from="center", ring_only=False, inferred=False),
             confidence_breakdown=ConfidenceScore(
                 overall=0.90,
                 location_confidence=0.90,
                 relation_confidence=0.90,
-                reasoning=None,
+                reasoning="Medium feature scale (lake) context → 5km buffer inferred by LLM. Activity 'hiking' considered but not used for distance calculation.",
             ),
             original_query="Hiking with children near Lake Geneva",
         ),

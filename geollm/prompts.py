@@ -33,14 +33,14 @@ Spatial Relations:
 - Use cardinal directions (N/S/E/W) for directional queries
 - Distinguish between:
   * Containment: exact boundary matching (in)
-  * Buffer: proximity or erosion (near, around, on_shores_of, in_the_heart_of, deep_inside)
+  * Buffer: proximity or erosion (near, on_shores_of, along, in_the_heart_of)
   * Directional: sector-based (north_of, south_of, east_of, west_of)
 - Common prepositions mapping to the 'in' relation:
    * "in X" → relation="in" (containment/boundary)
    * "on X" → relation="in" (surface containment, e.g., "on the mountain", "on the island")
 - Common prepositions mapping to the 'near' relation:
    * "near X" → relation="near"
-   * "around X" → relation="around"
+   * "around X" → relation="near" (treat as proximity)
    * "from X" → relation="near" (proximity/distance from a location)
    * "away from X" → relation="near" (distance from a location)
    * All proximity prepositions express distance to a location with optional explicit distance
@@ -101,11 +101,46 @@ Distance Extraction:
   * "15 minutes bike from X" → 15 * (20000/60) = 5000m
   * "walking distance from X" → 1000m (typical walk)
   * "biking distance from X" → 5000m (typical bike ride)
-- Leave null if not explicitly stated (defaults will be applied)
+
+Context-Aware Distance Inference:
+- When no explicit distance is stated, infer appropriate buffer distances based on query context
+- Set explicit_distance field with your inferred value (in meters) so the system uses your intelligent inference
+- Consider these contextual factors:
+
+  Activity/Transportation Context:
+  * Walking queries: 500m - 1km (e.g., "walking near the station" → 1000m)
+  * Biking queries: 3km - 5km (e.g., "biking near the lake" → 5000m)
+  * Driving queries: 10km - 20km (e.g., "driving near the city" → 15000m)
+  * General proximity (no activity): 5km default (e.g., "near Geneva" → 5000m)
+
+  Reference Feature Scale:
+  * Small features (station, monument, building): 500m - 1km
+  * Medium features (lake, town, park): 2km - 5km
+  * Large features (mountain, region, canton): 10km - 20km
+
+  Query Intent Signals:
+  * "close to", "next to", "right near": Tight proximity → 1000-2000m
+  * "around", "near": Standard proximity → 5000m
+  * "in the area of", "in the region of": Wide area → 10000m+
+
+  Erosion Context (in_the_heart_of relation):
+  * Small areas (neighborhood, small town): -500m erosion
+  * Medium areas (city, valley): -1000m erosion
+  * Large areas (canton, region): -2000m+ erosion
+
+- Examples of context-aware inference:
+  * "hiking near Lake Geneva" → explicit_distance=1000 (walking activity)
+  * "near Lausanne train station" → explicit_distance=1000 (small feature)
+  * "close to Geneva" → explicit_distance=2000 (intent: tight proximity)
+  * "in the area of Zurich" → explicit_distance=10000 (intent: wide area)
+  * "near the Alps" → explicit_distance=15000 (large feature scale)
+  * "in the heart of a small village" → explicit_distance=-500 (small area erosion)
+
+- If context is unclear or ambiguous, use sensible defaults: 5000m for proximity, -500m for erosion
 
 Buffer Configuration:
-- Positive distances = expansion (near, around)
-- Negative distances = erosion (in_the_heart_of, deep_inside)
+- Positive distances = expansion (near, along)
+- Negative distances = erosion (in_the_heart_of)
 - ring_only=true excludes reference feature (e.g., "on shores of lake" excludes the water)
 - buffer_from="center" for proximity, "boundary" for shores/erosion
 

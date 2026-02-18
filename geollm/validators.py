@@ -39,7 +39,7 @@ def enrich_with_defaults(geo_query: GeoQuery, spatial_config: SpatialRelationCon
     populate with defaults from the relation configuration.
 
     Directional relations use consistent 10km radius with 90° sector angle defaults.
-    Buffer relations use relation-specific defaults (near=5km, around=3km, etc.).
+    Buffer relations use fallback defaults when LLM doesn't infer context (near=5km, etc.).
 
     Args:
         geo_query: Parsed query to enrich
