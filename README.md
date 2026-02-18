@@ -182,12 +182,10 @@ Structured output model representing the parsed geographic filter.
 
 ### Buffer/Proximity
 
-- `near`: 5km default radius
-- `around`: 3km default radius
+- `near`: Proximity with context-aware distance (default 5km, LLM infers based on activity, feature scale, and intent)
 - `on_shores_of`: 1km ring buffer (excludes water body)
 - `along`: 500m buffer for linear features
-- `in_the_heart_of`: -500m erosion (central area)
-- `deep_inside`: -1000m erosion
+- `in_the_heart_of`: Erosion for central areas (default -500m, LLM infers based on area size)
 
 ### Directional
 

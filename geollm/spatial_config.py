@@ -73,16 +73,6 @@ class SpatialRelationConfig:
 
         self.register_relation(
             RelationConfig(
-                name="around",
-                category="buffer",
-                description="Similar to 'near' with 3km default radius",
-                default_distance_m=3000,
-                buffer_from="center",
-            )
-        )
-
-        self.register_relation(
-            RelationConfig(
                 name="on_shores_of",
                 category="buffer",
                 description="Ring buffer around lake/water boundary, excluding the water body itself",
@@ -110,16 +100,6 @@ class SpatialRelationConfig:
                 category="buffer",
                 description="Central area excluding periphery (negative buffer - erosion)",
                 default_distance_m=-500,
-                buffer_from="boundary",
-            )
-        )
-
-        self.register_relation(
-            RelationConfig(
-                name="deep_inside",
-                category="buffer",
-                description="Well within boundaries, away from edges (strong negative buffer)",
-                default_distance_m=-1000,
                 buffer_from="boundary",
             )
         )
