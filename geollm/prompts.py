@@ -85,11 +85,6 @@ Location Name Extraction:
 - Do NOT normalize, translate, or create canonical forms - the geodata layer handles that
 - Preserve the language and spelling used in the query
 
-Location Disambiguation:
-- Location ambiguity (e.g., "Paris" could be Paris, France or Paris, Texas) is handled by the geodata/geocoding layer
-- Preserve location names exactly as mentioned in the query without trying to disambiguate
-- The downstream geocoding service will handle ranking and disambiguation based on context, population, and prominence
-
 Distance Extraction:
 - Extract explicit distances: "within 5km" → explicit_distance=5000
 - Convert units to meters: "5km" → 5000, "500 meters" → 500, "2 miles" → 3219
@@ -138,28 +133,26 @@ Context-Aware Distance Inference:
 
 - If context is unclear or ambiguous, use sensible defaults: 5000m for proximity, -500m for erosion
 
-Buffer Configuration:
-- Positive distances = expansion (near, along)
-- Negative distances = erosion (in_the_heart_of)
-- ring_only=true excludes reference feature (e.g., "on shores of lake" excludes the water)
-- buffer_from="center" for proximity, "boundary" for shores/erosion
-
 Confidence Scoring:
 - overall: 0.9-1.0 = highly confident, 0.7-0.9 = confident, 0.5-0.7 = uncertain, <0.5 = very uncertain
 - Break down: location_confidence, relation_confidence
 - Always include reasoning to explain confidence scores and aid debugging
 - Lower confidence for:
-  * Ambiguous location names
-  * Unclear spatial relationships
-  * Generic references ("the train station" without city)
-  * Idiomatic expressions with multiple interpretations
+   * Ambiguous location names
+   * Unclear spatial relationships
+   * Generic references ("the train station" without city)
+   * Idiomatic expressions with multiple interpretations
 
-Query Type:
-- Always use "simple" for Phase 1
-- Future support: "compound", "split", "boolean"
+Spatial Relation Selection Rules:
+- When reference location is a LINEAR feature (river, road, railway, path, stream, etc.):
+  * Prefer 'along' over 'near' for proximity/distance queries. Example: "à 2km de la Venoge" (river) → relation='along', not 'near'
+- When reference location is an AREA feature (lake, water body, region, canton, etc.):
+  * Prefer 'on_shores_of' over 'near' for proximity/distance queries. Example: "near Lake Geneva" → relation='on_shores_of', not 'near'
+- When reference location is a POINT feature (city, building, train station, monument, etc.):
 
 {spatial_relations}"""
 
+# FIXME: add more instructions for relations and location type (linear + directional, ...)
 
 USER_TEMPLATE = """Parse the following location query:
 
