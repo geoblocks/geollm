@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from typing import Any
 
 from dotenv import load_dotenv
@@ -127,6 +128,7 @@ async def process_query_stream(request: QueryRequest):
             geo_query_result = None
 
             # Stream parsing events
+            parse_start = time.perf_counter()
             async for event in parser.parse_stream(request.query):
                 # Forward all events from parser
                 yield f"data: {json.dumps(event)}\n\n"
@@ -134,6 +136,7 @@ async def process_query_stream(request: QueryRequest):
                 # Capture the final GeoQuery for spatial processing
                 if event["type"] == "data-response":
                     geo_query_result = event["content"]
+            yield f"data: {json.dumps({'type': 'reasoning', 'content': 'LLM parsing', 'duration_ms': (time.perf_counter() - parse_start) * 1000})}\n\n"
 
             # If we have a parsed query, process the spatial relations
             if geo_query_result:
@@ -146,6 +149,7 @@ async def process_query_stream(request: QueryRequest):
 
                 # Resolve location
                 location_name = geo_query.reference_location.name
+                search_start = time.perf_counter()
                 features = datasource.search(location_name, type=geo_query.reference_location.type)
 
                 if not features:
@@ -153,18 +157,21 @@ async def process_query_stream(request: QueryRequest):
                     yield f"data: {json.dumps({'type': 'error', 'content': f'Location not found: {location_name}'})}\n\n"
                     return
 
-                yield f"data: {json.dumps({'type': 'reasoning', 'content': f'Found {len(features)} matching location(s)'})}\n\n"
+                yield f"data: {json.dumps({'type': 'reasoning', 'content': f'Found {len(features)} matching location(s)', 'duration_ms': (time.perf_counter() - search_start) * 1000})}\n\n"
 
                 # Apply spatial relation to ALL matching features
                 yield f"data: {json.dumps({'type': 'reasoning', 'content': 'Computing spatial search areas'})}\n\n"
 
                 result_features = []
+                spatial_duration = 0
 
                 for i, reference_feature in enumerate(features):
                     # Apply spatial relation to this feature
+                    spatial_start = time.perf_counter()
                     search_area = apply_spatial_relation(
                         reference_feature["geometry"], geo_query.spatial_relation, geo_query.buffer_config
                     )
+                    spatial_duration += (time.perf_counter() - spatial_start) * 1000
 
                     # Add search area feature
                     result_features.append(
@@ -182,6 +189,7 @@ async def process_query_stream(request: QueryRequest):
 
                     # Add reference feature
                     result_features.append(reference_feature)
+                yield f"data: {json.dumps({'type': 'reasoning', 'content': 'Computed spatial relations', 'duration_ms': spatial_duration})}\n\n"
 
                 # Construct final response
                 feature_collection = {

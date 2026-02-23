@@ -7,7 +7,7 @@ requires-python = ">=3.10"
 authors = [
     {name = "GeoLLM Contributors"}
 ]
-license = {text = "MIT"}
+license = {text = "BSD-3-Clause"}
 dependencies = [
     "langchain~=1.2",
     "pydantic~=2.12",
