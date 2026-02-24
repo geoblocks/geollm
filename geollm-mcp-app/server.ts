@@ -13,49 +13,9 @@ import { z } from "zod";
 const PYTHON_API_URL = process.env.PYTHON_API_URL ?? "http://127.0.0.1:8000";
 const PORT = Number(process.env.PORT ?? 3002);
 
-const server = new McpServer({
-  name: "GeoLLM MCP App Server",
-  version: "1.0.0",
-});
-
 const resourceUri = "ui://parse_geo_query/mcp-app.html";
 
-registerAppTool(
-  server,
-  "parse_geo_query",
-  {
-    title: "GeoLLM Geo Query",
-    description:
-      "Transforms natural language location queries into structured geographic filters that can be used by search engines and spatial databases",
-    inputSchema: {
-      user_query: z
-        .string()
-        .describe(
-          'The natural language query describing the geographic filter, e.g. "Find all locations within walking distance from Zurich main railway station"',
-        ),
-    },
-    _meta: { ui: { resourceUri } },
-  },
-  async ({ user_query }) => {
-    const response = await fetch(`${PYTHON_API_URL}/api/parse_geo_query`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_query }),
-    });
-
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`Python backend error (${response.status}): ${err}`);
-    }
-
-    const data = await response.json();
-    return {
-      content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
-    };
-  },
-);
-
-// CSP config: allow OSM tiles and geocoding directly from the browser
+// CSP config: allow OSM tiles directly from the browser
 const cspMeta = {
   ui: {
     csp: {
@@ -65,12 +25,58 @@ const cspMeta = {
   },
 };
 
-registerAppResource(server, resourceUri, resourceUri, { mimeType: RESOURCE_MIME_TYPE }, async () => {
-  const html = await fs.readFile(path.join(import.meta.dirname, "dist", "mcp-app.html"), "utf-8");
-  return {
-    contents: [{ uri: resourceUri, mimeType: RESOURCE_MIME_TYPE, text: html, _meta: cspMeta }],
-  };
-});
+// McpServer must be created per-request: the SDK disallows connecting the same
+// instance to more than one transport.
+function createServer(): McpServer {
+  const server = new McpServer({
+    name: "GeoLLM MCP App Server",
+    version: "1.0.0",
+  });
+
+  registerAppTool(
+    server,
+    "parse_geo_query",
+    {
+      title: "GeoLLM Geo Query",
+      description:
+        "Transforms natural language location queries into structured geographic filters that can be used by search engines and spatial databases",
+      inputSchema: {
+        user_query: z
+          .string()
+          .describe(
+            'The natural language query describing the geographic filter, e.g. "Find all locations within walking distance from Zurich main railway station"',
+          ),
+      },
+      _meta: { ui: { resourceUri } },
+    },
+    async ({ user_query }) => {
+      const response = await fetch(`${PYTHON_API_URL}/api/parse_geo_query`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_query }),
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`Python backend error (${response.status}): ${err}`);
+      }
+
+      const data = await response.json();
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
+      };
+    },
+  );
+
+  registerAppResource(server, resourceUri, resourceUri, { mimeType: RESOURCE_MIME_TYPE }, async () => {
+    const html = await fs.readFile(path.join(import.meta.dirname, "dist", "mcp-app.html"), "utf-8");
+    return {
+      contents: [{ uri: resourceUri, mimeType: RESOURCE_MIME_TYPE, text: html, _meta: cspMeta }],
+    };
+  });
+
+  return server;
+}
 
 const expressApp = express();
 expressApp.use(cors());
@@ -81,6 +87,7 @@ expressApp.post("/mcp", async (req, res) => {
     sessionIdGenerator: undefined,
     enableJsonResponse: true,
   });
+  const server = createServer();
   res.on("close", () => transport.close());
   await server.connect(transport);
   await transport.handleRequest(req, res, req.body);
