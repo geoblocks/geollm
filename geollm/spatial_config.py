@@ -22,7 +22,6 @@ class RelationConfig:
         ring_only: Exclude reference feature to create ring buffer
         sector_angle_degrees: Angular sector for directional queries
         direction_angle_degrees: Direction angle in degrees (0=North, 90=East, 180=South, 270=West, clockwise)
-        applies_to: Feature types this relation is commonly used with
     """
 
     name: str
@@ -33,7 +32,6 @@ class RelationConfig:
     ring_only: bool = False
     sector_angle_degrees: float | None = None
     direction_angle_degrees: float | None = None
-    applies_to: list[str] | None = None
 
 
 class SpatialRelationConfig:
@@ -79,7 +77,6 @@ class SpatialRelationConfig:
                 default_distance_m=1000,
                 buffer_from="boundary",
                 ring_only=True,
-                applies_to=["lake", "water_body", "sea"],
             )
         )
 
@@ -90,7 +87,6 @@ class SpatialRelationConfig:
                 description="Buffer following a linear feature like a river or road",
                 default_distance_m=500,
                 buffer_from="boundary",
-                applies_to=["river", "road", "railway", "linear_feature"],
             )
         )
 
@@ -256,10 +252,6 @@ class SpatialRelationConfig:
                 # Format line
                 lines.append(f"  • {rel.name}{dist_info}{flag_info}")
                 lines.append(f"    {rel.description}")
-
-                # Add applies_to info
-                if rel.applies_to:
-                    lines.append(f"    (commonly used with: {', '.join(rel.applies_to)})")
 
         # Add notes
         lines.append("\nNOTES:")
