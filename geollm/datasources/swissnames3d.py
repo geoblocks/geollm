@@ -17,6 +17,8 @@ from rapidfuzz import fuzz
 from shapely.geometry import mapping
 from shapely.ops import transform as shapely_transform
 
+from .location_types import get_matching_types
+
 # CH1903+ (LV95) to WGS84 transformer - data is assumed to always be in EPSG:2056
 _TRANSFORMER = pyproj.Transformer.from_crs("EPSG:2056", "EPSG:4326", always_xy=True)
 
@@ -368,10 +370,16 @@ class SwissNames3DSource:
 
         features = [self._row_to_feature(idx) for idx in indices]
 
-        # Filter by type if type hint provided
+        # Filter by type if type hint provided.
+        # Expand via the type hierarchy so that category hints (e.g. "water") match
+        # all concrete types within that category ("lake", "river", "pond", ...).
         if type is not None:
-            normalized_type = type.lower()
-            features = [f for f in features if f["properties"].get("type") == normalized_type]
+            matching_types = get_matching_types(type)
+            if matching_types:
+                features = [f for f in features if f["properties"].get("type") in matching_types]
+            else:
+                # Unknown type hint, fall back to exact string match
+                features = [f for f in features if f["properties"].get("type") == type.lower()]
 
         return features[:max_results]
 

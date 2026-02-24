@@ -263,7 +263,7 @@ class GeoFilterParser:
 
             yield {"type": "reasoning", "content": "Analyzing spatial relationship and location"}
             try:
-                response = self.structured_llm.invoke(formatted_messages)
+                response = await self.structured_llm.ainvoke(formatted_messages)
             except Exception as e:
                 yield {"type": "error", "content": f"LLM invocation failed: {str(e)}"}
                 raise ParsingError(

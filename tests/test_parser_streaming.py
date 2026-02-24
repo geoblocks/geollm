@@ -23,8 +23,8 @@ class MockLLM:
         self.include_raw = kwargs.get("include_raw", False)
         return self
 
-    def invoke(self, _messages):  # noqa: ARG002
-        """Mock invoke method."""
+    async def ainvoke(self, _messages):  # noqa: ARG002
+        """Mock async invoke method."""
         if not self.return_valid:
             return {"parsed": None, "raw": "Invalid response", "parsing_error": Exception("Parse failed")}
 

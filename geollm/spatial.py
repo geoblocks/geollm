@@ -15,11 +15,14 @@ from shapely.geometry.polygon import Polygon
 from .models import BufferConfig, SpatialRelation
 from .spatial_config import SpatialRelationConfig
 
+_DEFAULT_SPATIAL_CONFIG = SpatialRelationConfig()  # Module-level singleton for default spatial relation configuration.
+
 
 def apply_spatial_relation(
     geometry: dict[str, Any],
     relation: SpatialRelation,
     buffer_config: BufferConfig | None = None,
+    spatial_config: SpatialRelationConfig | None = None,
 ) -> dict[str, Any]:
     """
     Transform a reference geometry according to a spatial relation.
@@ -34,6 +37,9 @@ def apply_spatial_relation(
         geometry: GeoJSON geometry dict in WGS84 (EPSG:4326).
         relation: Spatial relation to apply.
         buffer_config: Buffer configuration (required for buffer/directional relations).
+        spatial_config: Spatial relation registry used to look up directional angles.
+            Defaults to the module-level singleton; pass an explicit instance to
+            avoid repeated construction when calling from a hot path.
 
     Returns:
         Transformed GeoJSON geometry dict in WGS84.
@@ -66,8 +72,8 @@ def apply_spatial_relation(
     elif relation.category == "directional":
         if buffer_config is None:
             raise ValueError(f"Directional relation '{relation.relation}' requires buffer_config")
-        config = SpatialRelationConfig()
-        relation_config = config.get_config(relation.relation)
+        cfg = spatial_config if spatial_config is not None else _DEFAULT_SPATIAL_CONFIG
+        relation_config = cfg.get_config(relation.relation)
         direction = relation_config.direction_angle_degrees or 0
         sector_angle = relation_config.sector_angle_degrees or 90
         return _apply_directional(geometry, buffer_config, direction, sector_angle)
@@ -99,12 +105,7 @@ def _apply_buffer(geometry: dict[str, Any], config: BufferConfig) -> dict[str, A
         buffered = centroid.buffer(abs(distance_deg))
     else:
         # Buffer from boundary
-        if config.distance_m < 0:
-            # Erosion: negative buffer shrinks the polygon
-            buffered = geom.buffer(distance_deg)  # distance_deg is already negative
-        else:
-            # Expansion from boundary
-            buffered = geom.buffer(distance_deg)
+        buffered = geom.buffer(distance_deg)
 
     # Ring buffer: subtract original geometry
     if config.ring_only and config.distance_m > 0:

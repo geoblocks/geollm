@@ -112,6 +112,32 @@ def test_unknown_name(source):
     assert len(results) == 0
 
 
+def test_search_type_category_expansion(source):
+    """Test that a category type hint expands to all concrete types within that category.
+
+    Searching with type='water' should match features whose concrete type is 'lake'
+    or 'river', not just features literally typed 'water'.
+    """
+    results_lake = source.search("Lac Léman", type="water")
+    assert len(results_lake) == 1, "Category hint 'water' should match concrete type 'lake'"
+    assert results_lake[0]["properties"]["type"] == "lake"
+
+    results_river = source.search("Rhône", type="water")
+    assert len(results_river) == 1, "Category hint 'water' should match concrete type 'river'"
+    assert results_river[0]["properties"]["type"] == "river"
+
+
+def test_search_type_exact_still_works(source):
+    """Test that an exact concrete type still filters correctly after hierarchy change."""
+    results = source.search("Lac Léman", type="lake")
+    assert len(results) == 1
+    assert results[0]["properties"]["type"] == "lake"
+
+    # A mismatched concrete type returns nothing
+    results_none = source.search("Lac Léman", type="river")
+    assert len(results_none) == 0
+
+
 # Tests for real SwissNames3D shapefiles
 
 

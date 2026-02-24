@@ -54,7 +54,7 @@ def enrich_with_defaults(geo_query: GeoQuery, spatial_config: SpatialRelationCon
     if relation_config.category not in ("buffer", "directional"):
         return geo_query
 
-    # If no buffer_config at all, create from defaults
+    # Step 1: ensure buffer_config exists, filled with config defaults.
     if geo_query.buffer_config is None:
         geo_query.buffer_config = BufferConfig(
             distance_m=relation_config.default_distance_m or 5000,
@@ -62,17 +62,12 @@ def enrich_with_defaults(geo_query: GeoQuery, spatial_config: SpatialRelationCon
             ring_only=relation_config.ring_only,
             inferred=True,
         )
-    # If buffer_config exists and is inferred, apply defaults for missing values
-    elif geo_query.buffer_config.inferred:
-        # Use explicit_distance if provided, otherwise use config default
-        if geo_query.spatial_relation.explicit_distance is not None:
-            geo_query.buffer_config.distance_m = geo_query.spatial_relation.explicit_distance
-            geo_query.buffer_config.inferred = False
-        elif geo_query.buffer_config.distance_m == 0:  # Sentinel value
-            geo_query.buffer_config.distance_m = relation_config.default_distance_m or 5000
+    # If buffer_config exists but distance is a sentinel zero, fill from config default.
+    elif geo_query.buffer_config.inferred and geo_query.buffer_config.distance_m == 0:
+        geo_query.buffer_config.distance_m = relation_config.default_distance_m or 5000
 
-    # If explicit_distance was provided by user, override and mark as not inferred
-    if geo_query.spatial_relation.explicit_distance is not None and geo_query.buffer_config:
+    # Step 2: if the user explicitly stated a distance, override whatever was set above.
+    if geo_query.spatial_relation.explicit_distance is not None:
         geo_query.buffer_config.distance_m = geo_query.spatial_relation.explicit_distance
         geo_query.buffer_config.inferred = False
 
