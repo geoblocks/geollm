@@ -1,7 +1,7 @@
 {
   "servers": {
     "GeoLLM": {
-      "url": "http://127.0.0.1:8000/mcp",
+      "url": "http://127.0.0.1:3002/mcp",
       "type": "http"
     }
   },
