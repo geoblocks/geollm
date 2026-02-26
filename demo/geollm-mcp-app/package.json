@@ -1,0 +1,23 @@
+{
+  "name": "geollm-mcp-app",
+  "type": "module",
+  "scripts": {
+    "build": "INPUT=mcp-app.html vite build",
+    "serve": "npx tsx server.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.1.1",
+    "@modelcontextprotocol/sdk": "^1.27.0",
+    "ol": "^10.8.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vite-plugin-singlefile": "^2.3.0"
+  }
+}
