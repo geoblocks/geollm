@@ -56,17 +56,17 @@ source .venv/bin/activate
 
 
 # 2. Install Node deps
-cd geollm-mcp-app
+cd demo/geollm-mcp-app
 npm install
 
 # 3. Build the frontend bundle
 npm run build          # produces dist/mcp-app.html
 
 # 4. Start the Python backend
-OPENAI_API_KEY=sk-... uv run geollm-mcp-app/mcp_server.py
+OPENAI_API_KEY=sk-... uv run demo/geollm-mcp-app/mcp_server.py
 
 # 5. Start the TypeScript MCP proxy
-cd geollm-mcp-app
+cd demo/geollm-mcp-app
 npm run serve          # listens on http://localhost:3002/mcp
 ```
 
@@ -88,7 +88,7 @@ Add the server to `.vscode/mcp.json` (or the equivalent config for your MCP clie
 Build context must be the **repo root** (the Dockerfile copies `geollm/` and `pyproject.toml`).
 
 ```bash
-cd geollm-mcp-app
+cd demo/geollm-mcp-app
 cp .env.example .env   # set OPENAI_API_KEY
 docker compose up --build
 ```
@@ -98,7 +98,7 @@ docker compose up --build
 | `python-backend` | 8000 | FastMCP / uvicorn                           |
 | `ts-server`      | 3002 | Node MCP proxy - connect your MCP host here |
 
-The SwissNames3D data directory (`../data` relative to `docker-compose.yml`) is mounted read-only into the Python container at `/data`.
+The SwissNames3D data directory (`../../data` relative to `docker-compose.yml`) is mounted read-only into the Python container at `/data`.
 
 ## Environment variables
 
