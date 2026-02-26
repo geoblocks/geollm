@@ -82,7 +82,7 @@ Extracts intent from text using an LLM.
 - **Output**: `GeoQuery` object (Pydantic model)
 - **Key Features**:
   - Multilingual support
-  - 12 spatial relations (containment, buffer, directional)
+  - 13 spatial relations (containment, buffer, directional)
   - Distance inference ("10 min walk" → 833m)
   - Confidence scoring
 
@@ -147,7 +147,7 @@ Standard GeoJSON dictionary structure:
 
 ---
 
-## Spatial Relations (10 Total)
+## Spatial Relations (13 Total)
 
 | Category | Relations | Behavior |
 |----------|-----------|----------|
@@ -155,7 +155,7 @@ Standard GeoJSON dictionary structure:
 | **Buffer** | `near`, `along` | Circular/Linear buffer with context-aware distances |
 | **Ring** | `on_shores_of` | Buffer - Original (Donut) |
 | **Erosion** | `in_the_heart_of` | Negative buffer (shrink) with context-aware depth |
-| **Directional** | `north_of`, `south_of`, ... | 90° Sector Wedge |
+| **Directional** | `north_of`, `south_of`, `east_of`, `west_of`, `northeast_of`, `southeast_of`, `southwest_of`, `northwest_of` | 90° Sector Wedge |
 
 ---
 
@@ -165,7 +165,7 @@ GeoLLM uses a **datasource-defined type system** with semantic grouping and fuzz
 
 ### Type Hierarchy
 
-Types are organized into 10 semantic categories to support fuzzy matching:
+Types are organized into 11 semantic categories to support fuzzy matching:
 
 | Category | Examples |
 |----------|----------|
