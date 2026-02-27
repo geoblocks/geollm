@@ -11,7 +11,7 @@ It uses Large Language Models (LLMs) to understand multilingual queries and extr
 
 ## Sponsorship
 
-[![camptocamp logo](./images/camptocamp-logo.svg)](https://www.camptocamp.com)
+[![camptocamp logo](./images/camptocamp-logo.png)](https://www.camptocamp.com)
 
 The development of this library is sponsored by [Camptocamp](https://www.camptocamp.com).
 
