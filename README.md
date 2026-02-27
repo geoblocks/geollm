@@ -9,6 +9,12 @@ It uses Large Language Models (LLMs) to understand multilingual queries and extr
 
 **Key Principle:** GeoLLM's sole purpose is to extract the **geographic filter** from user queries. It does NOT handle feature/activity identification or search execution.
 
+## Sponsorship
+
+[![camptocamp logo](./images/camptocamp-logo.svg)](https://www.camptocamp.com)
+
+The development of this library is sponsored by [Camptocamp](https://www.camptocamp.com).
+
 ## Features
 
 - **Geographic Filters Only**: Extracts spatial relationships from queries, ignoring non-geographic content
