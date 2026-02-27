@@ -159,6 +159,63 @@ Standard GeoJSON dictionary structure:
 
 ---
 
+## Query Types
+
+GeoLLM supports four query complexity levels through the `query_type` field in `GeoQuery`:
+
+| Type | Status | Purpose | Example |
+|------|--------|---------|---------|
+| **`simple`** | ✅ Implemented | Single spatial relation + reference location | "north of Lausanne" |
+| **`compound`** | 📋 Planned | Multi-step or hierarchical spatial queries | "north of Lausanne AND within 10km of a lake" |
+| **`split`** | 📋 Planned | Queries that divide an area into regions | "areas of Switzerland between Lausanne and Geneva" |
+| **`boolean`** | 📋 Planned | AND/OR/NOT logical operations on spatial relations | "within 5km of Geneva AND north of Bern" |
+
+### Current Implementation (Phase 1)
+
+Only `simple` queries are currently supported. A simple query has:
+- **One spatial relation** (e.g., "north", "in", "near")
+- **One reference location** (e.g., "Lausanne", a city, a canton)
+- Optional: Buffer distance configuration
+
+Example flow:
+```
+Input: "restaurants in Geneva"
+  ↓
+GeoQuery(
+    query_type="simple",
+    spatial_relation=SpatialRelation(relation="in", ...),
+    reference_location=ReferenceLocation(name="Geneva", ...),
+    ...
+)
+```
+
+### Future Query Types (Phase 2+)
+
+**Compound queries** would combine multiple spatial relations:
+- "North of Lausanne AND within 10km of the lake"
+- Requires: Multi-relation parsing, geometry intersection
+- Datasource: Hierarchical location resolution
+
+**Split queries** would divide areas by spatial relations:
+- "Regions of Switzerland north of Bern"
+- Requires: Area partitioning logic, polygon subdivision
+
+**Boolean queries** would use explicit logical operators:
+- "Within Geneva OR Bern, but not on lake shores"
+- Requires: Union/Intersection/Difference operations on geometries
+
+### Architecture Impact
+
+To support compound queries, three layers would need enhancement:
+
+1. **Parser (Layer 1)**: Detect and structure multiple spatial relations
+2. **Datasource (Layer 2)**: Support hierarchical/nested location resolution
+3. **Spatial Operations (Layer 3)**: Combine geometries (intersection, union, difference)
+
+The current single-relation architecture is intentionally simple to support Phase 1 requirements. The `query_type` field provides forward compatibility for future expansion.
+
+---
+
 ## Type System & Hierarchy
 
 GeoLLM uses a **datasource-defined type system** with semantic grouping and fuzzy matching.
