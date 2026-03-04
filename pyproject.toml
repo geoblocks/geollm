@@ -9,21 +9,21 @@ authors = [
 ]
 license = {text = "BSD-3-Clause"}
 dependencies = [
-    "langchain~=1.2",
-    "pydantic~=2.12",
-    "shapely>=2.0",
-    "pyproj>=3.6",
-    "geopandas>=0.14",
-    "rapidfuzz>=3.0",
+    "langchain>=1.2",
+    "pydantic>=2.12",
+    "shapely>=2.1",
+    "pyproj>=3.7",
+    "geopandas>=1.1",
+    "rapidfuzz>=3.14",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "langchain-openai~=1.1",
-    "pytest~=9.0",
-    "pytest-cov~=7.0",
-    "ruff~=0.15",
-    "ty~=0.0",
+    "langchain-openai>=1.1",
+    "pytest>=9.0",
+    "pytest-cov>=7.0",
+    "ruff>=0.15",
+    "ty>=0.0",
 ]
 
 [build-system]
@@ -49,8 +49,8 @@ python_functions = ["test_*"]
 
 [dependency-groups]
 dev = [
-    "fastapi>=0.129.0",
-    "python-dotenv>=1.2.1",
-    "uvicorn>=0.40.0",
-    "mcp[cli]>=1.26.0",
+    "fastapi>=0.135",
+    "python-dotenv>=1.2",
+    "uvicorn>=0.41",
+    "mcp[cli]>=1.26",
 ]
