@@ -30,7 +30,8 @@ if not os.path.exists(SWISSNAMES3D_PATH):
 
 datasource = SwissNames3DSource(SWISSNAMES3D_PATH)
 
-llm = ChatOpenAI(model="gpt-4o", temperature=0)
+model = os.environ.get("LLM_MODEL", "gpt-4o")
+llm = ChatOpenAI(model=model, temperature=0, api_key=os.getenv("LLM_API_KEY"))
 parser = GeoFilterParser(llm, datasource=datasource)
 
 

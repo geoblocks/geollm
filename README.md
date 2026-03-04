@@ -61,7 +61,7 @@ An interactive REPL is available for testing queries interactively:
 Set your OpenAI API key before running:
 
 ```bash
-export OPENAI_API_KEY='sk-...'
+export LLM_API_KEY='sk-...'
 uv run python repl.py
 ```
 
@@ -71,10 +71,10 @@ A FastAPI demo server is available that combines query parsing with geographic r
 
 **Setup:**
 
-Set `OPENAI_API_KEY` in your `.env` file:
+Set `LLM_API_KEY` in your `.env` file:
 
 ```bash
-echo "OPENAI_API_KEY=sk-..." > .env
+echo "LLM_API_KEY=..." > .env
 ```
 
 **Running the server:**
@@ -115,7 +115,7 @@ import os
 llm = ChatOpenAI(
     model="gpt-4o",
     temperature=0,
-    api_key=os.getenv("OPENAI_API_KEY")
+    api_key=os.getenv("LLM_API_KEY")
 )
 
 # Initialize parser

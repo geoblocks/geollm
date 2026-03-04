@@ -63,7 +63,7 @@ npm install
 npm run build          # produces dist/mcp-app.html
 
 # 4. Start the Python backend
-OPENAI_API_KEY=sk-... uv run demo/geollm-mcp-app/mcp_server.py
+LLM_API_KEY=... uv run demo/geollm-mcp-app/mcp_server.py
 
 # 5. Start the TypeScript MCP proxy
 cd demo/geollm-mcp-app
@@ -89,7 +89,7 @@ Build context must be the **repo root** (the Dockerfile copies `geollm/` and `py
 
 ```bash
 cd demo/geollm-mcp-app
-cp .env.example .env   # set OPENAI_API_KEY
+cp .env.example .env   # set LLM_API_KEY
 docker compose up --build
 ```
 
@@ -104,7 +104,8 @@ The SwissNames3D data directory (`../../data` relative to `docker-compose.yml`) 
 
 | Variable            | Default                 | Description                                                     |
 | ------------------- | ----------------------- | --------------------------------------------------------------- |
-| `OPENAI_API_KEY`    | -                       | Required. Passed to LangChain.                                  |
+| `LLM_API_KEY`       | -                       | Required. Passed to LangChain.                                  |
+| `LLM_MODEL`         | `gpt-4o`                | The model to use for the LLM.                                   |
 | `SWISSNAMES3D_PATH` | `data`                  | Path to the SwissNames3D shapefiles.                            |
 | `HOST`              | `127.0.0.1`             | Bind address for the Python server. Set to `0.0.0.0` in Docker. |
 | `PORT`              | `8000` / `3002`         | Port for Python / Node server respectively.                     |

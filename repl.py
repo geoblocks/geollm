@@ -51,21 +51,18 @@ def main():
     load_dotenv()
 
     # Get API key from environment
-    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = os.environ.get("LLM_API_KEY")
     if not api_key:
-        print("❌ Error: OPENAI_API_KEY environment variable not set")
-        print("   Set it with: export OPENAI_API_KEY='sk-...'")
+        print("❌ Error: LLM_API_KEY environment variable not set")
+        print("   Set it with: export LLM_API_KEY='sk-...'")
         return
+
+    model = os.environ.get("LLM_MODEL", "gpt-4o")
 
     # Initialize LLM
     print("🔄 Initializing GeoLLM...")
     try:
-        llm = init_chat_model(
-            model="gpt-4o",
-            model_provider="openai",
-            temperature=0,  # Deterministic for parsing
-            api_key=api_key,
-        )
+        llm = init_chat_model(model=model, temperature=0, api_key=api_key)
     except Exception as e:
         print(f"❌ Failed to initialize LLM: {e}")
         return
