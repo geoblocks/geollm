@@ -57,9 +57,6 @@ llm = ChatOpenAI(model="gpt-4o", temperature=0)
 parser = GeoFilterParser(llm, datasource=datasource)
 
 
-# ── Shared helpers ────────────────────────────────────────────────────────────
-
-
 def _build_result_features(geo_query, reference_features: list) -> list:
     """Apply spatial relations and return a flat list of (search_area, reference) Feature dicts."""
     result_features = []
