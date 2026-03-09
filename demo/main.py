@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from langchain_openai import ChatOpenAI
+from langchain.chat_models import init_chat_model
 from pydantic import BaseModel
 
 from geollm.datasources import SwissNames3DSource
@@ -41,7 +41,9 @@ print(f"Loading SwissNames3D from {SWISSNAMES3D_PATH}...")
 datasource = SwissNames3DSource(SWISSNAMES3D_PATH)
 
 # Initialize GeoLLM components
-llm = ChatOpenAI(model="gpt-4o", temperature=0)
+api_key = os.environ.get("LLM_API_KEY")
+model = os.environ.get("LLM_MODEL", "gpt-4o")
+llm = init_chat_model(model=model, temperature=0, api_key=api_key)
 parser = GeoFilterParser(llm, datasource=datasource)
 
 

@@ -22,10 +22,10 @@ from geollm import GeoFilterParser
 def parser():
     """Create parser with OpenAI LLM for testing."""
     # Skip tests if no API key is available
-    if not os.getenv("OPENAI_API_KEY"):
-        pytest.skip("OPENAI_API_KEY not set")
-
-    llm = init_chat_model(model="gpt-4o", model_provider="openai", temperature=0)
+    if not os.getenv("LLM_API_KEY"):
+        pytest.skip("LLM_API_KEY not set")
+    model = os.environ.get("LLM_MODEL", "gpt-4o")
+    llm = init_chat_model(model=model, temperature=0, api_key=os.getenv("LLM_API_KEY"))
     return GeoFilterParser(llm=llm)
 
 
