@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import time
 from typing import Any
@@ -11,9 +12,11 @@ from fastapi.staticfiles import StaticFiles
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
-from geollm.datasources import SwissNames3DSource
+from geollm.datasources import CompositeDataSource, IGNBDTopoSource, SwissNames3DSource
 from geollm.parser import GeoFilterParser
 from geollm.spatial import apply_spatial_relation
+
+logger = logging.getLogger("uvicorn")
 
 app = FastAPI(title="GeoLLM Demo")
 
@@ -31,14 +34,32 @@ app.add_middleware(
 
 # Data source configuration
 SWISSNAMES3D_PATH = os.getenv("SWISSNAMES3D_PATH", "data")
+IGN_BDTOPO_PATH = os.getenv("IGN_BDTOPO_PATH", "data")
 
 if not os.path.exists(SWISSNAMES3D_PATH):
     raise RuntimeError(
         f"SwissNames3D data not found at {SWISSNAMES3D_PATH}. Please set SWISSNAMES3D_PATH environment variable."
     )
 
+# Build datasource(s) and combine into a composite
+sources = []
+
 print(f"Loading SwissNames3D from {SWISSNAMES3D_PATH}...")
-datasource = SwissNames3DSource(SWISSNAMES3D_PATH)
+sources.append(SwissNames3DSource(SWISSNAMES3D_PATH))
+
+if os.path.exists(IGN_BDTOPO_PATH):
+    print(f"Loading IGN BD-TOPO from {IGN_BDTOPO_PATH}...")
+    try:
+        ign_source = IGNBDTopoSource(IGN_BDTOPO_PATH)
+        # Verify at least one IGN file is present before adding
+        ign_source.get_available_types()  # triggers lazy load
+        sources.append(ign_source)
+    except ValueError as e:
+        print(f"IGN BD-TOPO not loaded: {e}")
+else:
+    print(f"IGN BD-TOPO path not found ({IGN_BDTOPO_PATH}), skipping.")
+
+datasource = CompositeDataSource(*sources)
 
 # Initialize GeoLLM components
 llm = ChatOpenAI(model="gpt-4o", temperature=0)
@@ -150,6 +171,9 @@ async def process_query_stream(request: QueryRequest):
                 # Resolve location
                 location_name = geo_query.reference_location.name
                 search_start = time.perf_counter()
+                logger.info(
+                    f"Searching for location: {location_name} with type hint: {geo_query.reference_location.type}"
+                )
                 features = datasource.search(location_name, type=geo_query.reference_location.type)
 
                 if not features:
