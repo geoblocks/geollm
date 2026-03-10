@@ -175,6 +175,10 @@ async def process_query_stream(request: QueryRequest):
                     f"Searching for location: {location_name} with type hint: {geo_query.reference_location.type}"
                 )
                 features = datasource.search(location_name, type=geo_query.reference_location.type)
+                logger.info(
+                    f"Found {len(features)} features for location '{location_name}' in {time.perf_counter() - search_start:.2f} seconds"
+                )
+                logger.info(f"Features properties: {[f['properties'] for f in features]}")
 
                 if not features:
                     yield f"data: {json.dumps({'type': 'reasoning', 'content': f'Location not found: {location_name}'})}\n\n"
