@@ -1,0 +1,241 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "_layer": "commune",
+                "nom_officiel": "Paris",
+                "cleabs": "COMMUNE-75056",
+                "capitale_d_etat": "True",
+                "chef_lieu_de_region": "False",
+                "chef_lieu_de_departement": "False",
+                "chef_lieu_d_arrondissement": "False"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    2.347,
+                    48.859
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "_layer": "commune",
+                "nom_officiel": "Lyon",
+                "cleabs": "COMMUNE-69123",
+                "capitale_d_etat": "False",
+                "chef_lieu_de_region": "True",
+                "chef_lieu_de_departement": "False",
+                "chef_lieu_d_arrondissement": "False"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    4.832,
+                    45.758
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "_layer": "commune",
+                "nom_officiel": "Saint-Martin",
+                "cleabs": "COMMUNE-73247",
+                "capitale_d_etat": "False",
+                "chef_lieu_de_region": "False",
+                "chef_lieu_de_departement": "False",
+                "chef_lieu_d_arrondissement": "False"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    6.5,
+                    45.6
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "_layer": "commune",
+                "nom_officiel": "Saint-Martin",
+                "cleabs": "COMMUNE-34270",
+                "capitale_d_etat": "False",
+                "chef_lieu_de_region": "False",
+                "chef_lieu_de_departement": "False",
+                "chef_lieu_d_arrondissement": "False"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    3.2,
+                    43.5
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "_layer": "departement",
+                "nom_officiel": "Rhône",
+                "cleabs": "DEPT-69"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            4.5,
+                            45.4
+                        ],
+                        [
+                            5.2,
+                            45.4
+                        ],
+                        [
+                            5.2,
+                            46.0
+                        ],
+                        [
+                            4.5,
+                            46.0
+                        ],
+                        [
+                            4.5,
+                            45.4
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "_layer": "region",
+                "nom_officiel": "Auvergne-Rhône-Alpes",
+                "cleabs": "REGION-84"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            2.0,
+                            44.5
+                        ],
+                        [
+                            7.5,
+                            44.5
+                        ],
+                        [
+                            7.5,
+                            47.0
+                        ],
+                        [
+                            2.0,
+                            47.0
+                        ],
+                        [
+                            2.0,
+                            44.5
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "_layer": "cours_d_eau",
+                "toponyme": "la Seine",
+                "cleabs": "COURS-EAU-SEI-1"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        2.0,
+                        49.0
+                    ],
+                    [
+                        2.3,
+                        48.9
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "_layer": "cours_d_eau",
+                "toponyme": "la Seine",
+                "cleabs": "COURS-EAU-SEI-2"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        2.3,
+                        48.9
+                    ],
+                    [
+                        2.4,
+                        48.8
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "_layer": "plan_d_eau",
+                "toponyme": "Lac du Der",
+                "nature": "Lac",
+                "cleabs": "PLAN-EAU-DER"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            4.5,
+                            48.5
+                        ],
+                        [
+                            4.6,
+                            48.5
+                        ],
+                        [
+                            4.6,
+                            48.6
+                        ],
+                        [
+                            4.5,
+                            48.5
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "_layer": "detail_orographique",
+                "toponyme": "Mont Blanc",
+                "nature": "Sommet",
+                "cleabs": "OROG-MONTBLANC"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    6.865,
+                    45.833
+                ]
+            }
+        }
+    ]
+}
