@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
-from geollm.datasources import CompositeDataSource, IGNBDTopoSource, SwissNames3DSource
+from geollm.datasources import CompositeDataSource, IGNBDCartoSource, SwissNames3DSource
 from geollm.parser import GeoFilterParser
 from geollm.spatial import apply_spatial_relation
 
@@ -34,7 +34,7 @@ app.add_middleware(
 
 # Data source configuration
 SWISSNAMES3D_PATH = os.getenv("SWISSNAMES3D_PATH", "data")
-IGN_BDTOPO_PATH = os.getenv("IGN_BDTOPO_PATH", "data")
+IGN_BDCARTO_PATH = os.getenv("IGN_BDCARTO_PATH", "data/bdcarto")
 
 if not os.path.exists(SWISSNAMES3D_PATH):
     raise RuntimeError(
@@ -47,17 +47,17 @@ sources = []
 print(f"Loading SwissNames3D from {SWISSNAMES3D_PATH}...")
 sources.append(SwissNames3DSource(SWISSNAMES3D_PATH))
 
-if os.path.exists(IGN_BDTOPO_PATH):
-    print(f"Loading IGN BD-TOPO from {IGN_BDTOPO_PATH}...")
+if os.path.exists(IGN_BDCARTO_PATH):
+    print(f"Loading IGN BD-CARTO from {IGN_BDCARTO_PATH}...")
     try:
-        ign_source = IGNBDTopoSource(IGN_BDTOPO_PATH)
-        # Verify at least one IGN file is present before adding
+        ign_source = IGNBDCartoSource(IGN_BDCARTO_PATH)
+        # Verify at least one layer is present before adding
         ign_source.get_available_types()  # triggers lazy load
         sources.append(ign_source)
     except ValueError as e:
-        print(f"IGN BD-TOPO not loaded: {e}")
+        print(f"IGN BD-CARTO not loaded: {e}")
 else:
-    print(f"IGN BD-TOPO path not found ({IGN_BDTOPO_PATH}), skipping.")
+    print(f"IGN BD-CARTO path not found ({IGN_BDCARTO_PATH}), skipping.")
 
 datasource = CompositeDataSource(*sources)
 
