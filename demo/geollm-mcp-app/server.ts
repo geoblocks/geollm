@@ -50,10 +50,10 @@ function createServer(): McpServer {
       _meta: { ui: { resourceUri } },
     },
     async ({ user_query }) => {
-      const response = await fetch(`${PYTHON_API_URL}/api/parse_geo_query`, {
+      const response = await fetch(`${PYTHON_API_URL}/api/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_query }),
+        body: JSON.stringify({ query: user_query }),
       });
 
       if (!response.ok) {
