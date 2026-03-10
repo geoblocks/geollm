@@ -39,10 +39,6 @@ from shapely.ops import unary_union
 
 from .location_types import get_matching_types
 
-# ---------------------------------------------------------------------------
-# Type maps for layers whose type is derived from a `nature` column
-# ---------------------------------------------------------------------------
-
 _PLAN_D_EAU_TYPES: dict[str, str] = {
     "Lac": "lake",
     "Lagune": "lake",
@@ -113,19 +109,7 @@ _LIEU_DIT_TYPES: dict[str, str] = {
     "Lieu-dit non habité": "local_name",
 }
 
-# ---------------------------------------------------------------------------
-# Layer configuration
-# ---------------------------------------------------------------------------
-
-# Each entry describes how to extract name and type from a .gpkg layer.
-#
-#   name_col      - column holding the feature name
-#   fixed_type    - constant type for all rows  (mutually exclusive with type_col)
-#   type_col      - column to derive type from  (requires type_map)
-#   type_map      - dict mapping raw type_col values to normalized types
-#   commune_flags - if True, derive city/municipality from boolean chef-lieu columns
 _LAYER_CONFIGS: dict[str, dict[str, Any]] = {
-    # ── Administrative ──────────────────────────────────────────────────────
     "commune": {
         "name_col": "nom_officiel",
         "commune_flags": True,  # type derived from chef_lieu_* boolean columns
@@ -158,7 +142,6 @@ _LAYER_CONFIGS: dict[str, dict[str, Any]] = {
         "name_col": "nom_officiel",
         "fixed_type": "region",
     },
-    # ── Hydrography ─────────────────────────────────────────────────────────
     "cours_d_eau": {
         "name_col": "toponyme",
         "fixed_type": "river",
@@ -168,7 +151,6 @@ _LAYER_CONFIGS: dict[str, dict[str, Any]] = {
         "type_col": "nature",
         "type_map": _PLAN_D_EAU_TYPES,
     },
-    # ── Named places ────────────────────────────────────────────────────────
     "zone_d_habitation": {
         "name_col": "toponyme",
         "type_col": "nature",
@@ -184,7 +166,6 @@ _LAYER_CONFIGS: dict[str, dict[str, Any]] = {
         "type_col": "nature",
         "type_map": _DETAIL_OROGRAPHIQUE_TYPES,
     },
-    # ── Protected areas ─────────────────────────────────────────────────────
     "parc_ou_reserve": {
         "name_col": "toponyme",
         "type_col": "nature",
@@ -192,14 +173,8 @@ _LAYER_CONFIGS: dict[str, dict[str, Any]] = {
     },
 }
 
-# Synthetic column added at load time
 _TYPE_COL = "_normalized_type"
 _NAME_COL = "_name"
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 
 def _normalize_name(name: str) -> str:
@@ -208,8 +183,6 @@ def _normalize_name(name: str) -> str:
     return "".join(c for c in nfkd if not unicodedata.combining(c)).lower().strip()
 
 
-# French definite articles (including elided forms) to strip from the start of names
-# so that "Rhône" matches "le Rhône", "Loire" matches "la Loire", etc.
 _FR_ARTICLES = ("le ", "la ", "les ", "l'", "l'", "de ", "du ", "des ")
 
 
@@ -246,10 +219,8 @@ def _to_json_value(val: Any) -> Any:
             return None
     except (TypeError, ValueError):
         pass
-    # pandas Timestamp → ISO-8601 string
     if isinstance(val, pd.Timestamp):
         return val.isoformat()
-    # numpy integers / floats → plain Python types
     if hasattr(val, "item"):
         return val.item()
     return val
@@ -277,12 +248,6 @@ def _derive_type(row: pd.Series, cfg: dict[str, Any]) -> str:
     return "unknown"
 
 
-# Types for which same-name features should be merged into a single geometry.
-# These are continuous geographic features (rivers, lakes, roads, ridges, …)
-# that BD-CARTO splits into multiple rows but that users expect as one entity.
-# Settlement and administrative types are intentionally excluded: French villages
-# with the same name in different departments are distinct places and must NOT
-# be merged.
 _MERGE_TYPES: frozenset[str] = frozenset(
     [
         # Hydrography
@@ -331,26 +296,17 @@ def _merge_segments(features: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
     merged: list[dict[str, Any]] = []
     for (name, ftype), group_features in groups.items():
-        # Only merge types that represent continuous geographic features.
-        # For settlements and administrative boundaries, keep each feature
-        # separate even if they share a name.
         if len(group_features) == 1 or ftype not in _MERGE_TYPES:
             merged.extend(group_features)
         else:
             geoms = [shape(f["geometry"]) for f in group_features if f.get("geometry") and f["geometry"].get("type")]
             combined = unary_union(geoms)
-            # Use the first feature as the base and overwrite its geometry
             base = dict(group_features[0].items())
             base["geometry"] = mapping(combined)
-            bounds = combined.bounds  # (minx, miny, maxx, maxy) or empty tuple
+            bounds = combined.bounds
             base["bbox"] = tuple(bounds) if bounds else None
             merged.append(base)
     return merged
-
-
-# ---------------------------------------------------------------------------
-# Main class
-# ---------------------------------------------------------------------------
 
 
 class IGNBDCartoSource:
@@ -383,10 +339,6 @@ class IGNBDCartoSource:
         self._gdf: gpd.GeoDataFrame | None = None
         self._name_index: dict[str, list[int]] = {}
 
-    # ------------------------------------------------------------------
-    # Loading
-    # ------------------------------------------------------------------
-
     def _ensure_loaded(self) -> None:
         if self._gdf is not None:
             return
@@ -411,13 +363,8 @@ class IGNBDCartoSource:
             if name_col not in gdf.columns:
                 continue
 
-            # Unified name column
             gdf[_NAME_COL] = gdf[name_col].astype(str)
-
-            # Unified type column
             gdf[_TYPE_COL] = gdf.apply(lambda row, c=cfg: _derive_type(row, c), axis=1)
-
-            # Reproject to WGS84
             gdf = gdf.to_crs("EPSG:4326")
 
             gdfs.append(gdf)
@@ -443,10 +390,6 @@ class IGNBDCartoSource:
                     self._name_index[key] = []
                 self._name_index[key].append(idx)
 
-    # ------------------------------------------------------------------
-    # Feature conversion
-    # ------------------------------------------------------------------
-
     def _row_to_feature(self, idx: int) -> dict[str, Any]:
         """Convert a GeoDataFrame row to a GeoJSON Feature dict (WGS84)."""
         assert self._gdf is not None
@@ -461,7 +404,6 @@ class IGNBDCartoSource:
             geometry: dict[str, Any] = {"type": "Point", "coordinates": [0, 0]}
             bbox = None
         else:
-            # Data is already in WGS84 after to_crs() in _load_from_directory
             geometry = mapping(geom)
             bounds = geom.bounds
             bbox: tuple[float, float, float, float] | None = (bounds[0], bounds[1], bounds[2], bounds[3])
@@ -485,10 +427,6 @@ class IGNBDCartoSource:
             "bbox": bbox,
             "properties": properties,
         }
-
-    # ------------------------------------------------------------------
-    # Public API (GeoDataSource protocol)
-    # ------------------------------------------------------------------
 
     def search(
         self,
@@ -530,9 +468,6 @@ class IGNBDCartoSource:
             else:
                 features = [f for f in features if f["properties"].get("type") == type.lower()]
 
-        # Merge multiple segments of the same named feature (e.g. a river
-        # stored as many individual LineString rows) into a single unified
-        # geometry so that spatial operations cover the full extent.
         features = _merge_segments(features)
 
         return features[:max_results]
