@@ -35,7 +35,6 @@ import pandas as pd
 import pyproj
 from rapidfuzz import fuzz
 from shapely.geometry import mapping
-from shapely.ops import transform as shapely_transform
 
 from .location_types import get_matching_types
 
