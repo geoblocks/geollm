@@ -9,7 +9,6 @@ services:
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - SWISSNAMES3D_PATH=/data
-      - HOST=0.0.0.0
     volumes:
       - ../../data:/data:ro
     restart: unless-stopped
