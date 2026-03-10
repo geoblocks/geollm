@@ -26,9 +26,7 @@ def real_source():
     return IGNBDCartoSource(DATA_DIR)
 
 
-# ---------------------------------------------------------------------------
 # Fixture-based tests
-# ---------------------------------------------------------------------------
 
 
 def test_load_data(source):
@@ -171,9 +169,7 @@ def test_get_available_types(source):
     assert "peak" in types
 
 
-# ---------------------------------------------------------------------------
 # Real data tests (skipped when BD-CARTO files are absent)
-# ---------------------------------------------------------------------------
 
 
 def test_real_load(real_source):
