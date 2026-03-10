@@ -19,7 +19,6 @@ from geollm.datasources import CompositeDataSource, IGNBDCartoSource, SwissNames
 from geollm.parser import GeoFilterParser
 from geollm.spatial import apply_spatial_relation
 
-
 logger = logging.getLogger("uvicorn")
 
 # Load environment variables
