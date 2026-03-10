@@ -30,11 +30,12 @@ from .location_types import get_matching_types
 
 # Maps normalized type names to their NATURE (CHEF_LIEU) / STATUT (COMMUNE) raw values.
 # The same raw values appear in both columns, so one map covers both.
+#
+# All place-level statuses (capital, préfecture, etc.) are normalized to "city" because they
+# are standard settlements in the geographic sense — the administrative label is preserved
+# as the raw STATUT / NATURE property on each returned feature for downstream filtering.
 NATURE_TYPE_MAP: dict[str, list[str]] = {
-    "capital": ["Capitale d'état"],
-    "regional_prefecture": ["Préfecture de région"],
-    "prefecture": ["Préfecture"],
-    "subprefecture": ["Sous-préfecture"],
+    "city": ["Capitale d'état", "Préfecture de région", "Préfecture", "Sous-préfecture"],
     "municipality": ["Commune simple", "Commune"],
 }
 
@@ -356,7 +357,6 @@ class IGNBDTopoSource:
         Return all normalized geographic types this datasource can return.
 
         Returns:
-            Sorted list of type strings (e.g. ["arrondissement", "capital",
-            "municipality", "prefecture", "regional_prefecture", "subprefecture"]).
+            Sorted list of type strings: ``["arrondissement", "city", "municipality"]``.
         """
-        return sorted(NATURE_TYPE_MAP.keys()) + ["arrondissement"]
+        return sorted(set(NATURE_TYPE_MAP.keys()) | {"arrondissement"})
