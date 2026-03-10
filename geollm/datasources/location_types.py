@@ -36,6 +36,10 @@ TYPE_HIERARCHY: dict[str, list[str]] = {
         "boulder",
         "massif",
     ],
+    "mountain": [
+        "mountain",
+        "peak",
+    ],
     "natural": [
         "cave",
         "forest",
@@ -51,8 +55,10 @@ TYPE_HIERARCHY: dict[str, list[str]] = {
         "canton",
         "municipality",
         "region",
+        "department",
         "area",
         "border_marker",
+        "arrondissement",
     ],
     "settlement": [
         "city",
