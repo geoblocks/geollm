@@ -5,13 +5,13 @@ Provides a Protocol-based interface for data sources and a SwissNames3D implemen
 """
 
 from .composite import CompositeDataSource
-from .ign_bdtopo import IGNBDTopoSource
+from .ign_bdcarto import IGNBDCartoSource
 from .protocol import GeoDataSource
 from .swissnames3d import SwissNames3DSource
 
 __all__ = [
     "CompositeDataSource",
     "GeoDataSource",
-    "IGNBDTopoSource",
+    "IGNBDCartoSource",
     "SwissNames3DSource",
 ]
