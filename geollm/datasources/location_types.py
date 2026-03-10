@@ -53,6 +53,12 @@ TYPE_HIERARCHY: dict[str, list[str]] = {
         "region",
         "area",
         "border_marker",
+        # French administrative types (IGN BD-TOPO)
+        "capital",
+        "regional_prefecture",
+        "prefecture",
+        "subprefecture",
+        "arrondissement",
     ],
     "settlement": [
         "city",
