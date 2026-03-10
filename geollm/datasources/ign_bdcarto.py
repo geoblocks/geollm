@@ -345,8 +345,36 @@ class IGNBDCartoSource:
         self._load_data()
 
     def _load_data(self) -> None:
-        self._gdf = self._load_from_directory()
+        if self._data_path.is_dir():
+            self._gdf = self._load_from_directory()
+        else:
+            self._gdf = self._load_from_file(self._data_path)
         self._build_name_index()
+
+    def _load_from_file(self, path: Path) -> gpd.GeoDataFrame:
+        """Load from a GeoJSON fixture file. Features must include a ``_layer`` column."""
+        full_gdf = gpd.read_file(str(path))
+        if "_layer" not in full_gdf.columns:
+            raise ValueError(f"GeoJSON fixture {path} must include a '_layer' column")
+
+        gdfs: list[gpd.GeoDataFrame] = []
+        for layer_name, cfg in _LAYER_CONFIGS.items():
+            rows = full_gdf[full_gdf["_layer"] == layer_name].copy()
+            if rows.empty:
+                continue
+            name_col: str = cfg["name_col"]
+            if name_col not in rows.columns:
+                continue
+            rows[_NAME_COL] = rows[name_col].astype(str)
+            rows[_TYPE_COL] = rows.apply(lambda row, c=cfg: _derive_type(row, c), axis=1)
+            rows = rows.to_crs("EPSG:4326")
+            gdfs.append(rows)
+
+        if not gdfs:
+            raise ValueError(f"No matching BD-CARTO features found in {path}")
+
+        combined = pd.concat(gdfs, ignore_index=True)
+        return gpd.GeoDataFrame(combined, crs="EPSG:4326", geometry="geometry")
 
     def _load_from_directory(self) -> gpd.GeoDataFrame:
         """Load and concatenate all configured layers from the data directory."""
