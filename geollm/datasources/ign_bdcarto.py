@@ -33,15 +33,11 @@ from typing import Any
 
 import geopandas as gpd
 import pandas as pd
-import pyproj
 from rapidfuzz import fuzz
 from shapely.geometry import mapping, shape
 from shapely.ops import unary_union
 
 from .location_types import get_matching_types
-
-# Lambert-93 → WGS84 transformer
-_TRANSFORMER = pyproj.Transformer.from_crs("EPSG:2154", "EPSG:4326", always_xy=True)
 
 # ---------------------------------------------------------------------------
 # Type maps for layers whose type is derived from a `nature` column
