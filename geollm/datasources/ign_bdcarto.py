@@ -122,11 +122,11 @@ _LIEU_DIT_TYPES: dict[str, str] = {
 
 # Each entry describes how to extract name and type from a .gpkg layer.
 #
-#   name_col      – column holding the feature name
-#   fixed_type    – constant type for all rows  (mutually exclusive with type_col)
-#   type_col      – column to derive type from  (requires type_map)
-#   type_map      – dict mapping raw type_col values to normalized types
-#   commune_flags – if True, derive city/municipality from boolean chef-lieu columns
+#   name_col      - column holding the feature name
+#   fixed_type    - constant type for all rows  (mutually exclusive with type_col)
+#   type_col      - column to derive type from  (requires type_map)
+#   type_map      - dict mapping raw type_col values to normalized types
+#   commune_flags - if True, derive city/municipality from boolean chef-lieu columns
 _LAYER_CONFIGS: dict[str, dict[str, Any]] = {
     # ── Administrative ──────────────────────────────────────────────────────
     "commune": {
@@ -233,6 +233,29 @@ def _index_keys(name: str) -> list[str]:
                 keys.append(stripped)
             break  # at most one leading article
     return keys
+
+
+def _to_json_value(val: Any) -> Any:
+    """
+    Convert a pandas/numpy value to a JSON-serializable Python primitive.
+
+    Returns ``None`` for missing values (NaN, NaT, None) so they are omitted
+    from the feature properties.
+    """
+    if val is None:
+        return None
+    try:
+        if pd.isna(val):
+            return None
+    except (TypeError, ValueError):
+        pass
+    # pandas Timestamp → ISO-8601 string
+    if isinstance(val, pd.Timestamp):
+        return val.isoformat()
+    # numpy integers / floats → plain Python types
+    if hasattr(val, "item"):
+        return val.item()
+    return val
 
 
 def _commune_type(row: pd.Series) -> str:
@@ -383,8 +406,8 @@ class IGNBDCartoSource:
         }
         for col in self._gdf.columns:
             if col not in skip_cols:
-                val = row.get(col)
-                if val is not None and str(val) not in ("nan", "None"):
+                val = _to_json_value(row.get(col))
+                if val is not None:
                     properties[col] = val
 
         return {
