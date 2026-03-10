@@ -36,6 +36,10 @@ TYPE_HIERARCHY: dict[str, list[str]] = {
         "boulder",
         "massif",
     ],
+    "mountain": [
+        "mountain",
+        "peak",
+    ],
     "natural": [
         "cave",
         "forest",
