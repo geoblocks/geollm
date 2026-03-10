@@ -27,6 +27,7 @@ Expected data layout (produced by scripts/extract_bdcarto.sh):
 """
 
 import unicodedata
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -34,7 +35,8 @@ import geopandas as gpd
 import pandas as pd
 import pyproj
 from rapidfuzz import fuzz
-from shapely.geometry import mapping
+from shapely.geometry import mapping, shape
+from shapely.ops import unary_union
 
 from .location_types import get_matching_types
 
@@ -279,6 +281,77 @@ def _derive_type(row: pd.Series, cfg: dict[str, Any]) -> str:
     return "unknown"
 
 
+# Types for which same-name features should be merged into a single geometry.
+# These are continuous geographic features (rivers, lakes, roads, ridges, …)
+# that BD-CARTO splits into multiple rows but that users expect as one entity.
+# Settlement and administrative types are intentionally excluded: French villages
+# with the same name in different departments are distinct places and must NOT
+# be merged.
+_MERGE_TYPES: frozenset[str] = frozenset(
+    [
+        # Hydrography
+        "river",
+        "lake",
+        "pond",
+        "glacier",
+        # Landforms
+        "mountain",
+        "peak",
+        "ridge",
+        "valley",
+        "plain",
+        "massif",
+        "pass",
+        # Protected areas / forests
+        "park",
+        "nature_reserve",
+        "forest",
+        # Transport linear features
+        "road",
+        "railway",
+        "bridge",
+        "tunnel",
+    ]
+)
+
+
+def _merge_segments(features: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Merge features that share the same (name, type) by unioning their geometries,
+    but only for types listed in ``_MERGE_TYPES``.
+
+    Rivers, ridges and other continuous geographic features in BD-CARTO are
+    often split into many individual segments.  When the caller queries for
+    "l'Oise" they expect the full course of the river, not an arbitrary single
+    segment.  Settlement and administrative types (city, municipality, …) are
+    excluded because two French villages with the same name are distinct places
+    that must not be conflated.
+    """
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for f in features:
+        props = f.get("properties", {})
+        key = (str(props.get("name", "")), str(props.get("type", "")))
+        groups[key].append(f)
+
+    merged: list[dict[str, Any]] = []
+    for (name, ftype), group_features in groups.items():
+        # Only merge types that represent continuous geographic features.
+        # For settlements and administrative boundaries, keep each feature
+        # separate even if they share a name.
+        if len(group_features) == 1 or ftype not in _MERGE_TYPES:
+            merged.extend(group_features)
+        else:
+            geoms = [shape(f["geometry"]) for f in group_features if f.get("geometry") and f["geometry"].get("type")]
+            combined = unary_union(geoms)
+            # Use the first feature as the base and overwrite its geometry
+            base = dict(group_features[0].items())
+            base["geometry"] = mapping(combined)
+            bounds = combined.bounds  # (minx, miny, maxx, maxy) or empty tuple
+            base["bbox"] = tuple(bounds) if bounds else None
+            merged.append(base)
+    return merged
+
+
 # ---------------------------------------------------------------------------
 # Main class
 # ---------------------------------------------------------------------------
@@ -460,6 +533,11 @@ class IGNBDCartoSource:
                 features = [f for f in features if f["properties"].get("type") in matching_types]
             else:
                 features = [f for f in features if f["properties"].get("type") == type.lower()]
+
+        # Merge multiple segments of the same named feature (e.g. a river
+        # stored as many individual LineString rows) into a single unified
+        # geometry so that spatial operations cover the full extent.
+        features = _merge_segments(features)
 
         return features[:max_results]
 
