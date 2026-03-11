@@ -1,5 +1,6 @@
 import contextlib
 import json
+import logging
 import os
 import time
 from typing import Any
@@ -14,9 +15,11 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.exceptions import ToolError
 from pydantic import BaseModel
 
-from geollm.datasources import SwissNames3DSource
+from geollm.datasources import CompositeDataSource, IGNBDCartoSource, SwissNames3DSource
 from geollm.parser import GeoFilterParser
 from geollm.spatial import apply_spatial_relation
+
+logger = logging.getLogger("uvicorn")
 
 # Load environment variables
 load_dotenv()
@@ -43,14 +46,32 @@ app.add_middleware(
 
 # Data source configuration
 SWISSNAMES3D_PATH = os.getenv("SWISSNAMES3D_PATH", "data")
+IGN_BDCARTO_PATH = os.getenv("IGN_BDCARTO_PATH", "data/bdcarto")
 
 if not os.path.exists(SWISSNAMES3D_PATH):
     raise RuntimeError(
         f"SwissNames3D data not found at {SWISSNAMES3D_PATH}. Please set SWISSNAMES3D_PATH environment variable."
     )
 
+# Build datasource(s) and combine into a composite
+sources = []
+
 print(f"Loading SwissNames3D from {SWISSNAMES3D_PATH}...")
-datasource = SwissNames3DSource(SWISSNAMES3D_PATH)
+sources.append(SwissNames3DSource(SWISSNAMES3D_PATH))
+
+if os.path.exists(IGN_BDCARTO_PATH):
+    print(f"Loading IGN BD-CARTO from {IGN_BDCARTO_PATH}...")
+    try:
+        ign_source = IGNBDCartoSource(IGN_BDCARTO_PATH)
+        # Verify at least one layer is present before adding
+        ign_source.get_available_types()  # triggers lazy load
+        sources.append(ign_source)
+    except ValueError as e:
+        print(f"IGN BD-CARTO not loaded: {e}")
+else:
+    print(f"IGN BD-CARTO path not found ({IGN_BDCARTO_PATH}), skipping.")
+
+datasource = CompositeDataSource(*sources)
 
 # Initialize GeoLLM components
 llm = ChatOpenAI(model="gpt-4o", temperature=0)
@@ -160,7 +181,14 @@ async def process_query_stream(request: QueryRequest):
                 # Resolve location
                 location_name = geo_query.reference_location.name
                 search_start = time.perf_counter()
+                logger.info(
+                    f"Searching for location: {location_name} with type hint: {geo_query.reference_location.type}"
+                )
                 features = datasource.search(location_name, type=geo_query.reference_location.type)
+                logger.info(
+                    f"Found {len(features)} features for location '{location_name}' in {time.perf_counter() - search_start:.2f} seconds"
+                )
+                logger.info(f"Features properties: {[f['properties'] for f in features]}")
 
                 if not features:
                     yield f"data: {json.dumps({'type': 'reasoning', 'content': f'Location not found: {location_name}'})}\n\n"
