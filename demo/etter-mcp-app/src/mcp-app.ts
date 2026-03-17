@@ -69,7 +69,7 @@ const searchBtn = document.getElementById("search-btn") as HTMLButtonElement;
 
 // --- MCP App ---
 
-const app = new App({ name: "GeoLLM", version: "1.0.0" });
+const app = new App({ name: "etter", version: "1.0.0" });
 app.connect();
 
 interface GeoQueryResult {

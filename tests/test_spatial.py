@@ -4,8 +4,8 @@ Tests for spatial operations module.
 
 from shapely.geometry import Point, Polygon, mapping, shape
 
-from geollm.models import BufferConfig, SpatialRelation
-from geollm.spatial import apply_spatial_relation
+from etter.models import BufferConfig, SpatialRelation
+from etter.spatial import apply_spatial_relation
 
 
 def test_containment_passthrough():

@@ -1,5 +1,5 @@
 // Registers the MCP App tool + resource and proxies tool calls to the Python backend.
-console.log("Starting GeoLLM MCP App server...");
+console.log("Starting etter MCP App server...");
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -29,7 +29,7 @@ const cspMeta = {
 // instance to more than one transport.
 function createServer(): McpServer {
   const server = new McpServer({
-    name: "GeoLLM MCP App Server",
+    name: "etter MCP App Server",
     version: "1.0.0",
   });
 
@@ -37,7 +37,7 @@ function createServer(): McpServer {
     server,
     "parse_geo_query",
     {
-      title: "GeoLLM Geo Query",
+      title: "etter Geo Query",
       description:
         "Transforms natural language location queries into structured geographic filters that can be used by search engines and spatial databases",
       inputSchema: {
@@ -98,6 +98,6 @@ expressApp.listen(PORT, (err) => {
     console.error("Error starting server:", err);
     process.exit(1);
   }
-  console.log(`GeoLLM MCP App server listening on http://localhost:${PORT}/mcp`);
+  console.log(`etter MCP App server listening on http://localhost:${PORT}/mcp`);
   console.log(`Proxying tool calls to Python backend at ${PYTHON_API_URL}`);
 });

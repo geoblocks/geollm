@@ -1,13 +1,9 @@
-"""
-Interactive REPL for GeoLLM query parsing.
-"""
-
 import os
 
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
 
-from geollm import GeoFilterParser
+from etter import GeoFilterParser
 
 
 def print_result(result):
@@ -58,7 +54,7 @@ def main():
         return
 
     # Initialize LLM
-    print("🔄 Initializing GeoLLM...")
+    print("🔄 Initializing etter...")
     try:
         llm = init_chat_model(
             model="gpt-4o",
@@ -77,10 +73,10 @@ def main():
         print(f"❌ Failed to initialize parser: {e}")
         return
 
-    print("✅ GeoLLM initialized successfully!")
+    print("✅ etter initialized successfully!")
     print()
     print("=" * 60)
-    print("GeoLLM Interactive REPL")
+    print("etter Interactive REPL")
     print("=" * 60)
     print("Enter natural language geographic queries.")
     print("Type 'help' for available commands or 'quit' to exit.")

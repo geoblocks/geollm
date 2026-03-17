@@ -4,8 +4,8 @@ Tests for spatial relation configuration.
 
 import pytest
 
-from geollm.exceptions import UnknownRelationError
-from geollm.spatial_config import RelationConfig, SpatialRelationConfig
+from etter.exceptions import UnknownRelationError
+from etter.spatial_config import RelationConfig, SpatialRelationConfig
 
 
 def test_default_relations_loaded():

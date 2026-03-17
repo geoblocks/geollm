@@ -1,13 +1,15 @@
-# GeoLLM
+![etter logo](./images/etter-logo.png)
+
+> **etter** /ˈɛtər/ *n.* (Swiss German) — the boundary or enclosure marking the edge of a village or commune; a natural demarcation between settled and unsettled land.
 
 Natural language geographic query parsing using LLMs.
 
 ## Overview
 
-GeoLLM transforms natural language location queries into structured geographic filters that can be used by search engines and spatial databases.
+etter transforms natural language location queries into structured geographic filters that can be used by search engines and spatial databases.
 It uses Large Language Models (LLMs) to understand multilingual queries and extract spatial relationships.
 
-**Key Principle:** GeoLLM's sole purpose is to extract the **geographic filter** from user queries. It does NOT handle feature/activity identification or search execution.
+**Key Principle:** etter's sole purpose is to extract the **geographic filter** from user queries. It does NOT handle feature/activity identification or search execution.
 
 ## Sponsorship
 
@@ -25,22 +27,22 @@ The development of this library is sponsored by [Camptocamp](https://www.camptoc
 - **Flexible Configuration**: Customizable spatial relations and confidence thresholds
 - **LLM Provider Agnostic**: Works with OpenAI, Anthropic, or local models
 
-## What GeoLLM Does (and Doesn't Do)
+## What etter Does (and Doesn't Do)
 
-**✅ GeoLLM extracts:**
+**✅ etter extracts:**
 
 - Spatial relations: "north of", "in", "near", etc.
 - Reference locations: "Lausanne", "Lake Geneva", etc.
 - Distance parameters: "within 5km", "around 2 miles", etc.
 
-**❌ GeoLLM does NOT handle:**
+**❌ etter does NOT handle:**
 
 - Feature/activity identification: "hiking", "restaurants", "hotels"
 - Attribute filtering: "with children", "vegetarian", "4-star"
 - Search execution or database queries
 
 **Integration Pattern:**
-Parent application handles feature/activity filtering and combines it with GeoLLM's geographic filter for complete search functionality.
+Parent application handles feature/activity filtering and combines it with etter's geographic filter for complete search functionality.
 
 ## Installation
 
@@ -108,7 +110,7 @@ The web UI at `http://localhost:8000` includes a toggle to enable streaming mode
 
 ```python
 from langchain_openai import ChatOpenAI
-from geollm import GeoFilterParser
+from etter import GeoFilterParser
 import os
 
 # Initialize LLM
@@ -136,7 +138,7 @@ parser = GeoFilterParser(
 ### Custom Spatial Relations
 
 ```python
-from geollm import SpatialRelationConfig, RelationConfig
+from etter import SpatialRelationConfig, RelationConfig
 
 config = SpatialRelationConfig()
 config.register_relation(RelationConfig(
@@ -177,7 +179,7 @@ Structured output model representing the parsed geographic filter.
 - `confidence_breakdown`: Confidence scores
 - `original_query`: Original input text
 
-**Note:** GeoLLM is fully implemented with three integrated layers: parsing, geographic resolution via datasources, and spatial operations. The demo API shows a complete end-to-end workflow that resolves locations and computes search areas.
+**Note:** etter is fully implemented with three integrated layers: parsing, geographic resolution via datasources, and spatial operations. The demo API shows a complete end-to-end workflow that resolves locations and computes search areas.
 
 ## Available Spatial Relations
 
@@ -200,7 +202,7 @@ Structured output model representing the parsed geographic filter.
 ## Error Handling
 
 ```python
-from geollm import ParsingError, UnknownRelationError, LowConfidenceError
+from etter import ParsingError, UnknownRelationError, LowConfidenceError
 
 try:
     result = parser.parse("some query")
@@ -213,6 +215,23 @@ except LowConfidenceError as e:
     print(f"Low confidence: {e.confidence}")
     print(f"Reasoning: {e.reasoning}")
 ```
+
+## Demo Examples
+
+Here are some good example queries to try with the demo application:
+
+- `walk in the Gros-de-Vaud`
+- `on the shores of the lac Morat`
+- `near Lausanne`
+- `south west of Lausanne`
+- `5km north of Lausanne`
+- `walking distance from Zurich main railway station`
+- `15 min biking from Zurich main railway station`
+- `along l'Orbe`
+
+Not yet supported:
+
+- `right bank of the Rhône`
 
 ## Architecture
 

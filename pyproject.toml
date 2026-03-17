@@ -1,11 +1,11 @@
 [project]
-name = "geollm"
+name = "etter"
 version = "0.1.0"
 description = "Natural language geographic query parsing using LLMs"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-    {name = "GeoLLM Contributors"}
+    {name = "etter contributors"}
 ]
 license = {text = "BSD-3-Clause"}
 dependencies = [
@@ -39,7 +39,7 @@ select = ["F", "I", "E", "W", "UP", "C4", "ARG"]
 ignore = ["E501"]
 
 [tool.setuptools]
-packages = { find = { where = ["."], include = ["geollm*"] } }
+packages = { find = { where = ["."], include = ["etter*"] } }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

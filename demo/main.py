@@ -15,25 +15,25 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.exceptions import ToolError
 from pydantic import BaseModel
 
-from geollm.datasources import CompositeDataSource, IGNBDCartoSource, SwissNames3DSource
-from geollm.parser import GeoFilterParser
-from geollm.spatial import apply_spatial_relation
+from etter.datasources import CompositeDataSource, IGNBDCartoSource, SwissNames3DSource
+from etter.parser import GeoFilterParser
+from etter.spatial import apply_spatial_relation
 
 # Load environment variables
 load_dotenv()
 
 logger = logging.getLogger("uvicorn")
 
-geo_mcp = FastMCP("GeoLLM MCP Server", stateless_http=True, json_response=True)
+geo_mcp = FastMCP("etter MCP Server", stateless_http=True, json_response=True)
 
 
 @contextlib.asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     async with geo_mcp.session_manager.run():
         yield
 
 
-app = FastAPI(title="GeoLLM Demo", lifespan=lifespan)
+app = FastAPI(title="etter Demo", lifespan=lifespan)
 
 # Enable CORS (for development)
 app.add_middleware(
@@ -73,7 +73,7 @@ else:
 
 datasource = CompositeDataSource(*sources)
 
-# Initialize GeoLLM components
+# Initialize etter components
 llm = ChatOpenAI(model="gpt-4o", temperature=0)
 parser = GeoFilterParser(llm, datasource=datasource)
 
@@ -174,7 +174,7 @@ async def process_query_stream(request: QueryRequest):
                 yield f"data: {json.dumps({'type': 'reasoning', 'content': 'Resolving location in database'})}\n\n"
 
                 # Reconstruct GeoQuery from dict (for type safety)
-                from geollm.models import GeoQuery
+                from etter.models import GeoQuery
 
                 geo_query = GeoQuery.model_validate(geo_query_result)
 

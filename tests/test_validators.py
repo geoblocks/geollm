@@ -6,16 +6,16 @@ import warnings
 
 import pytest
 
-from geollm.exceptions import LowConfidenceError, LowConfidenceWarning, UnknownRelationError
-from geollm.models import (
+from etter.exceptions import LowConfidenceError, LowConfidenceWarning, UnknownRelationError
+from etter.models import (
     BufferConfig,
     ConfidenceScore,
     GeoQuery,
     ReferenceLocation,
     SpatialRelation,
 )
-from geollm.spatial_config import SpatialRelationConfig
-from geollm.validators import (
+from etter.spatial_config import SpatialRelationConfig
+from etter.validators import (
     check_confidence_threshold,
     enrich_with_defaults,
     validate_query,

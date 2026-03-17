@@ -5,7 +5,7 @@ Tests for Pydantic models.
 import pytest
 from pydantic import ValidationError
 
-from geollm.models import (
+from etter.models import (
     BufferConfig,
     ConfidenceScore,
     GeoQuery,

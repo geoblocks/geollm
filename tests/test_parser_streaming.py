@@ -4,9 +4,9 @@ Tests for streaming parser functionality.
 
 import pytest
 
-from geollm.exceptions import ParsingError
-from geollm.models import BufferConfig, ConfidenceScore, GeoQuery, ReferenceLocation, SpatialRelation
-from geollm.parser import GeoFilterParser
+from etter.exceptions import ParsingError
+from etter.models import BufferConfig, ConfidenceScore, GeoQuery, ReferenceLocation, SpatialRelation
+from etter.parser import GeoFilterParser
 
 # Configure pytest to use anyio for async tests
 pytestmark = pytest.mark.anyio

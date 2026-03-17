@@ -7,7 +7,7 @@
 .github/
 .venv/
 node_modules/
-geollm-mcp-app/node_modules/
-geollm-mcp-app/dist/
+etter-mcp-app/node_modules/
+etter-mcp-app/dist/
 tests/
 .env

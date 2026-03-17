@@ -15,7 +15,7 @@ import os
 import pytest
 from langchain.chat_models import init_chat_model
 
-from geollm import GeoFilterParser
+from etter import GeoFilterParser
 
 
 @pytest.fixture

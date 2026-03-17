@@ -1,5 +1,5 @@
 """
-Custom exceptions for GeoLLM parsing and validation.
+Custom exceptions for parsing and validation.
 """
 
 

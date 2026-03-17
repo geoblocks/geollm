@@ -63,7 +63,7 @@ class GeoFilterParser:
 
         Example:
             >>> from langchain.chat_models import init_chat_model
-            >>> from geollm.datasources.swissnames3d import SwissNames3DSource
+            >>> from etter.datasources.swissnames3d import SwissNames3DSource
             >>> llm = init_chat_model(model="gpt-4o", model_provider="openai", temperature=0)
             >>> datasource = SwissNames3DSource("data/")
             >>> parser = GeoFilterParser(llm=llm, datasource=datasource)

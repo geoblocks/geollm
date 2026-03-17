@@ -2,7 +2,7 @@ services:
   python-backend:
     build:
       context: ../..
-      dockerfile: demo/geollm-mcp-app/Dockerfile
+      dockerfile: demo/etter-mcp-app/Dockerfile
       target: python-backend
     ports:
       - "8000:8000"
@@ -16,7 +16,7 @@ services:
   ts-server:
     build:
       context: ../..
-      dockerfile: demo/geollm-mcp-app/Dockerfile
+      dockerfile: demo/etter-mcp-app/Dockerfile
       target: ts-server
     ports:
       - "3002:3002"

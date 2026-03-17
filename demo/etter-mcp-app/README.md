@@ -1,4 +1,4 @@
-# GeoLLM MCP App
+# etter MCP App
 
 MCP App that exposes the `parse_geo_query` tool with an embedded OpenLayers map UI.
 
@@ -6,7 +6,7 @@ MCP App that exposes the `parse_geo_query` tool with an embedded OpenLayers map 
 
 The [`@modelcontextprotocol/ext-apps`](https://www.npmjs.com/package/@modelcontextprotocol/ext-apps) SDK - which handles MCP App resource registration and the `ui://` scheme - only has a TypeScript/Node implementation. There is no Python equivalent yet.
 
-The GeoLLM parsing logic lives in Python (`geollm` package + LangChain + OpenAI). Rather than re-implement it in TypeScript, the architecture uses a thin TypeScript proxy that speaks MCP to the host and delegates all tool logic to the Python backend over HTTP.
+The etter parsing logic lives in Python (`etter` package + LangChain + OpenAI). Rather than re-implement it in TypeScript, the architecture uses a thin TypeScript proxy that speaks MCP to the host and delegates all tool logic to the Python backend over HTTP.
 
 ## Architecture
 
@@ -36,7 +36,7 @@ MCP Host (VS Code / Claude Desktop)
 
 **demo/main.py**
 
-- Loads the `geollm` package, SwissNames3D data, and a LangChain `ChatOpenAI` instance.
+- Loads the `etter` package, SwissNames3D data, and a LangChain `ChatOpenAI` instance.
 - Exposes `POST /api/query` (consumed by the TS proxy) and `POST /api/query/stream` (SSE streaming variant).
 - Mounts a native MCP endpoint at `/mcp` via FastMCP — useful when the map panel is not needed and you want to avoid the Node dependency entirely.
 - Returns a `QueryResponse` containing the parsed `GeoQuery` and a GeoJSON `FeatureCollection`.
@@ -56,7 +56,7 @@ MCP Host (VS Code / Claude Desktop)
 uv sync --extra dev
 
 # 2. Install Node deps
-cd demo/geollm-mcp-app
+cd demo/etter-mcp-app
 npm install
 
 # 3. Build the frontend bundle
@@ -66,7 +66,7 @@ npm run build          # produces dist/mcp-app.html
 OPENAI_API_KEY=sk-... uv run uvicorn demo.main:app --reload
 
 # 5. Start the TypeScript MCP proxy
-cd demo/geollm-mcp-app
+cd demo/etter-mcp-app
 npm run serve          # listens on http://localhost:3002/mcp
 ```
 
@@ -75,7 +75,7 @@ Add the server to `.vscode/mcp.json` (or the equivalent config for your MCP clie
 ```json
 {
   "servers": {
-    "GeoLLM": {
+    "etter": {
       "url": "http://127.0.0.1:3002/mcp",
       "type": "http"
     }
@@ -88,7 +88,7 @@ To use the native MCP endpoint directly (no map UI, no Node dependency):
 ```json
 {
   "servers": {
-    "GeoLLM": {
+    "etter": {
       "url": "http://127.0.0.1:8000/mcp/",
       "type": "http"
     }
@@ -98,10 +98,10 @@ To use the native MCP endpoint directly (no map UI, no Node dependency):
 
 ## Docker
 
-Build context must be the **repo root** (the Dockerfile copies `geollm/` and `pyproject.toml`).
+Build context must be the **repo root** (the Dockerfile copies `etter/` and `pyproject.toml`).
 
 ```bash
-cd demo/geollm-mcp-app
+cd demo/etter-mcp-app
 cp .env.example .env   # set OPENAI_API_KEY
 docker compose up --build
 ```

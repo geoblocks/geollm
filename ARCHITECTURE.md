@@ -1,16 +1,16 @@
-# GeoLLM Architecture
+# etter Architecture
 
 ## Core Principle
 
-**GeoLLM has ONE responsibility: Extract & Execute geographic filters from natural language queries.**
+**etter has ONE responsibility: Extract & Execute geographic filters from natural language queries.**
 
-### What GeoLLM Does ✅
+### What etter Does ✅
 
 - **Layer 1: Parsing** - Extract structured `GeoQuery` from text ("north of Lausanne")
 - **Layer 2: Resolution** - Resolve "Lausanne" to a physical geometry using a datasource
 - **Layer 3: Spatial Operations** - Transform that geometry using the spatial relation (e.g., generate a "north" sector)
 
-### What GeoLLM Does NOT Do ❌
+### What etter Does NOT Do ❌
 
 - Subject/feature identification ("hiking", "restaurants")
 - Attribute filtering ("with children", "vegetarian")
@@ -20,18 +20,18 @@
 
 ## Integration Pattern
 
-GeoLLM fits into a search pipeline:
+etter fits into a search pipeline:
 
 ```
 User Query: "Hiking with children north of Lausanne"
      ↓
 Parent System → Extracts: Activity="Hiking", Audience="children"
      ↓
-GeoLLM.parser → Parses: relation="north_of", location="Lausanne"
+etter.parser → Parses: relation="north_of", location="Lausanne"
      ↓
-GeoLLM.datasource → Resolves: "Lausanne" → Point(6.63, 46.52)
+etter.datasource → Resolves: "Lausanne" → Point(6.63, 46.52)
      ↓
-GeoLLM.spatial → Transforms: Point → Polygon(North Sector)
+etter.spatial → Transforms: Point → Polygon(North Sector)
      ↓
 Parent System → Database Query: WHERE activity='hiking' AND ST_Intersects(location, sector_polygon)
 ```
@@ -149,19 +149,19 @@ Standard GeoJSON dictionary structure:
 
 ## Spatial Relations (13 Total)
 
-| Category | Relations | Behavior |
-|----------|-----------|----------|
-| **Containment** | `in` | Exact geometry match |
-| **Buffer** | `near`, `along` | Circular/Linear buffer with context-aware distances |
-| **Ring** | `on_shores_of` | Buffer - Original (Donut) |
-| **Erosion** | `in_the_heart_of` | Negative buffer (shrink) with context-aware depth |
-| **Directional** | `north_of`, `south_of`, `east_of`, `west_of`, `northeast_of`, `southeast_of`, `southwest_of`, `northwest_of` | 90° Sector Wedge |
+| Category (`category=`) | Relations | Behavior |
+|------------------------|-----------|----------|
+| **`containment`** | `in` | Exact geometry match |
+| **`buffer`** | `near`, `along` | Circular/Linear buffer with context-aware distances |
+| **`buffer`** (ring) | `on_shores_of` | Buffer - Original (Donut) |
+| **`buffer`** (erosion) | `in_the_heart_of` | Negative buffer (shrink) with context-aware depth |
+| **`directional`** | `north_of`, `south_of`, `east_of`, `west_of`, `northeast_of`, `southeast_of`, `southwest_of`, `northwest_of` | 90° Sector Wedge |
 
 ---
 
 ## Query Types
 
-GeoLLM supports four query complexity levels through the `query_type` field in `GeoQuery`:
+etter supports four query complexity levels through the `query_type` field in `GeoQuery`:
 
 | Type | Status | Purpose | Example |
 |------|--------|---------|---------|
@@ -218,7 +218,7 @@ The current single-relation architecture is intentionally simple to support Phas
 
 ## Type System & Hierarchy
 
-GeoLLM uses a **datasource-defined type system** with semantic grouping and fuzzy matching.
+etter uses a **datasource-defined type system** with semantic grouping and fuzzy matching.
 
 ### Type Hierarchy
 
@@ -281,7 +281,7 @@ See `location_types.py` for the complete type hierarchy and utilities.
 ## Project Structure
 
 ```
-geollm/
+etter/
 ├── parser.py              # Layer 1: LLM Parser
 ├── models.py              # Pydantic models for Layer 1
 ├── spatial_config.py      # Spatial relation definitions

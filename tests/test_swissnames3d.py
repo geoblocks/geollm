@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from geollm.datasources import SwissNames3DSource
+from etter.datasources import SwissNames3DSource
 
 # Path to the synthetic fixture
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "swissnames3d_sample.json"

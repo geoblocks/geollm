@@ -1,8 +1,6 @@
 .PHONY: help install test lint format clean repl demo
 
 help:
-	@echo "GeoLLM - UV Commands"
-	@echo ""
 	@echo "Setup:"
 	@echo "  make install          	Install dependencies"
 	@echo "  make dev              	Install with dev dependencies"

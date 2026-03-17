@@ -1,7 +1,7 @@
 """
 Tests for context-dependent distance handling.
 
-These tests verify that GeoLLM correctly recognizes and converts contextual
+These tests verify that etter correctly recognizes and converts contextual
 distance expressions like "walking distance" and "biking distance" into
 explicit buffer distances.
 """
@@ -11,7 +11,7 @@ import os
 import pytest
 from langchain.chat_models import init_chat_model
 
-from geollm import GeoFilterParser
+from etter import GeoFilterParser
 
 
 @pytest.fixture

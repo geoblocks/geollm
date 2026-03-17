@@ -1,5 +1,5 @@
 {
-  "name": "geollm-mcp-app",
+  "name": "etter-mcp-app",
   "type": "module",
   "scripts": {
     "build": "INPUT=mcp-app.html vite build",

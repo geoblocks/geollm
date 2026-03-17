@@ -25,13 +25,13 @@ jobs:
         run: uv sync --extra dev
 
       - name: Run ruff format check
-        run: uv run ruff format --check geollm/ tests/
+        run: uv run ruff format --check etter/ tests/
 
       - name: Run ruff lint
-        run: uv run ruff check geollm/ tests/
+        run: uv run ruff check etter/ tests/
 
       - name: Run type check
-        run: uv run ty check geollm/
+        run: uv run ty check etter/
 
       - name: Run tests
         run: uv run pytest tests/ -v

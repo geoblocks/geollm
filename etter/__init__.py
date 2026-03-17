@@ -1,5 +1,5 @@
 """
-GeoLLM - Natural Language Geographic Query Parsing
+etter - Natural Language Geographic Query Parsing
 
 Parse location queries into structured geographic queries using LLM.
 """

@@ -49,7 +49,7 @@ def apply_spatial_relation(
                      or if the relation category is unknown.
 
     Examples:
-        >>> from geollm.models import SpatialRelation, BufferConfig
+        >>> from etter.models import SpatialRelation, BufferConfig
         >>> # Circular buffer
         >>> result = apply_spatial_relation(
         ...     geometry={"type": "Point", "coordinates": [6.63, 46.52]},

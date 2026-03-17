@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from geollm.datasources.ign_bdcarto import IGNBDCartoSource
+from etter.datasources.ign_bdcarto import IGNBDCartoSource
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "ign_bdcarto_sample.json"
 DATA_DIR = Path(__file__).parent.parent / "data" / "bdcarto"
