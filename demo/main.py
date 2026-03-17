@@ -22,6 +22,8 @@ from geollm.spatial import apply_spatial_relation
 # Load environment variables
 load_dotenv()
 
+logger = logging.getLogger("uvicorn")
+
 geo_mcp = FastMCP("GeoLLM MCP Server", stateless_http=True, json_response=True)
 
 
