@@ -72,6 +72,12 @@ class BufferConfig(BaseModel):
         "Used for queries like 'on the shores of Lake X' (exclude the lake water itself). "
         "Only valid with buffer_from='boundary'.",
     )
+    side: Literal["left", "right"] | None = Field(
+        None,
+        description="Side of a linear feature for one-sided buffer. "
+        "'left' = left side relative to line direction, 'right' = right side. "
+        "None = both sides (symmetric buffer). Populated from relation config by enrich_with_defaults().",
+    )
     inferred: bool = Field(
         True,
         description="True if this configuration was inferred from relation defaults. "

@@ -2,7 +2,7 @@
 Tests for spatial operations module.
 """
 
-from shapely.geometry import Point, Polygon, mapping, shape
+from shapely.geometry import LineString, Point, Polygon, mapping, shape
 
 from etter.models import BufferConfig, SpatialRelation
 from etter.spatial import apply_spatial_relation
@@ -89,3 +89,56 @@ def test_directional_sector():
     assert poly.contains(Point(0, 0.5))  # Point to North should be inside
     assert not poly.contains(Point(0, -0.5))  # Point to South should be outside
     assert not poly.contains(Point(0.5, 0))  # Point to East should be outside (45 deg boundary)
+
+
+def test_left_side_buffer():
+    """Test one-sided buffer on the left side of a line."""
+    # Horizontal line going east (left side = north)
+    line = LineString([(0, 0), (2, 0)])
+    geom = mapping(line)
+
+    relation = SpatialRelation(relation="left_bank", category="buffer")
+    config = BufferConfig(distance_m=111320, buffer_from="boundary", side="left")  # ~1 degree
+
+    result = apply_spatial_relation(geom, relation, config)
+
+    result_shape = shape(result)
+    assert not result_shape.is_empty
+    # Left side of an eastward line is the north side
+    assert result_shape.contains(Point(1, 0.5))  # North of line (left)
+    assert not result_shape.contains(Point(1, -0.5))  # South of line (right)
+
+
+def test_right_side_buffer():
+    """Test one-sided buffer on the right side of a line."""
+    # Horizontal line going east (right side = south)
+    line = LineString([(0, 0), (2, 0)])
+    geom = mapping(line)
+
+    relation = SpatialRelation(relation="right_bank", category="buffer")
+    config = BufferConfig(distance_m=111320, buffer_from="boundary", side="right")  # ~1 degree
+
+    result = apply_spatial_relation(geom, relation, config)
+
+    result_shape = shape(result)
+    assert not result_shape.is_empty
+    # Right side of an eastward line is the south side
+    assert result_shape.contains(Point(1, -0.5))  # South of line (right)
+    assert not result_shape.contains(Point(1, 0.5))  # North of line (left)
+
+
+def test_side_none_symmetric_buffer():
+    """Test that side=None preserves existing symmetric buffer behavior."""
+    line = LineString([(0, 0), (2, 0)])
+    geom = mapping(line)
+
+    relation = SpatialRelation(relation="along", category="buffer")
+    config = BufferConfig(distance_m=111320, buffer_from="boundary", side=None)  # ~1 degree
+
+    result = apply_spatial_relation(geom, relation, config)
+
+    result_shape = shape(result)
+    assert not result_shape.is_empty
+    # Symmetric buffer covers both sides
+    assert result_shape.contains(Point(1, 0.5))  # North of line
+    assert result_shape.contains(Point(1, -0.5))  # South of line

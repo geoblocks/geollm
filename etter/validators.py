@@ -66,7 +66,11 @@ def enrich_with_defaults(geo_query: GeoQuery, spatial_config: SpatialRelationCon
     elif geo_query.buffer_config.inferred and geo_query.buffer_config.distance_m == 0:
         geo_query.buffer_config.distance_m = relation_config.default_distance_m or 5000
 
-    # Step 2: if the user explicitly stated a distance, override whatever was set above.
+    # Step 2: propagate side from relation config.
+    if relation_config.side is not None:
+        geo_query.buffer_config.side = relation_config.side
+
+    # Step 3: if the user explicitly stated a distance, override whatever was set above.
     if geo_query.spatial_relation.explicit_distance is not None:
         geo_query.buffer_config.distance_m = geo_query.spatial_relation.explicit_distance
         geo_query.buffer_config.inferred = False

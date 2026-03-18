@@ -10,7 +10,9 @@ import math
 from typing import Any
 
 from shapely.geometry import mapping, shape
+from shapely.geometry.base import BaseGeometry
 from shapely.geometry.polygon import Polygon
+from shapely.ops import linemerge
 
 from .models import BufferConfig, SpatialRelation
 from .spatial_config import SpatialRelationConfig
@@ -103,6 +105,9 @@ def _apply_buffer(geometry: dict[str, Any], config: BufferConfig) -> dict[str, A
         # Buffer from centroid
         centroid = geom.centroid
         buffered = centroid.buffer(abs(distance_deg))
+    elif config.side is not None:
+        # One-sided buffer: symmetric buffer clipped to one side of the line
+        buffered = _one_sided_buffer(geom, abs(distance_deg), config.side)
     else:
         # Buffer from boundary
         buffered = geom.buffer(distance_deg)
@@ -115,6 +120,42 @@ def _apply_buffer(geometry: dict[str, Any], config: BufferConfig) -> dict[str, A
         return geometry  # Fallback if erosion eliminates geometry
 
     return mapping(buffered)
+
+
+def _one_sided_buffer(geom: BaseGeometry, distance_deg: float, side: str) -> BaseGeometry:
+    """
+    Create a one-sided buffer by clipping a symmetric buffer to one side of a line.
+
+    Uses offset_curve to build a clipping polygon, then intersects with the
+    full symmetric buffer. This avoids artifacts from Shapely's single_sided=True
+    on sinuous lines with large distances.
+    """
+    full_buffer = geom.buffer(distance_deg)
+
+    # offset_curve: positive = left, negative = right
+    offset_dist = distance_deg if side == "left" else -distance_deg
+    offset_line = geom.offset_curve(offset_dist)
+
+    if offset_line.is_empty:
+        return full_buffer
+
+    # Merge multi-part offsets into a single line when possible
+    if offset_line.geom_type == "MultiLineString":
+        offset_line = linemerge(offset_line)
+
+    # Collect coordinates from offset (handles both LineString and MultiLineString)
+    if offset_line.geom_type == "MultiLineString":
+        offset_coords = []
+        for part in offset_line.geoms:
+            offset_coords.extend(part.coords)
+    else:
+        offset_coords = list(offset_line.coords)
+
+    # Build a clip polygon: original line coords + reversed offset coords
+    clip_coords = list(geom.coords) + offset_coords[::-1]
+    clip_poly = Polygon(clip_coords).buffer(0)  # buffer(0) fixes any self-intersections
+
+    return full_buffer.intersection(clip_poly)
 
 
 def _apply_directional(

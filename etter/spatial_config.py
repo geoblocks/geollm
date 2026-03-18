@@ -31,6 +31,7 @@ class RelationConfig:
     default_distance_m: float | None = None
     buffer_from: Literal["center", "boundary"] | None = None
     ring_only: bool = False
+    side: Literal["left", "right"] | None = None
     sector_angle_degrees: float | None = None
     direction_angle_degrees: float | None = None
 
@@ -88,6 +89,28 @@ class SpatialRelationConfig:
                 description="Buffer following a linear feature like a river or road",
                 default_distance_m=500,
                 buffer_from="boundary",
+            )
+        )
+
+        self.register_relation(
+            RelationConfig(
+                name="left_bank",
+                category="buffer",
+                description="Left bank of a linear feature (river, road) relative to its direction/flow",
+                default_distance_m=500,
+                buffer_from="boundary",
+                side="left",
+            )
+        )
+
+        self.register_relation(
+            RelationConfig(
+                name="right_bank",
+                category="buffer",
+                description="Right bank of a linear feature (river, road) relative to its direction/flow",
+                default_distance_m=500,
+                buffer_from="boundary",
+                side="right",
             )
         )
 
@@ -248,6 +271,8 @@ class SpatialRelationConfig:
                     flags.append("ring buffer")
                 if rel.buffer_from:
                     flags.append(f"from {rel.buffer_from}")
+                if rel.side:
+                    flags.append(f"{rel.side} side only")
                 flag_info = f" [{', '.join(flags)}]" if flags else ""
 
                 # Format line
