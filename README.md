@@ -228,10 +228,7 @@ Here are some good example queries to try with the demo application:
 - `walking distance from Zurich main railway station`
 - `15 min biking from Zurich main railway station`
 - `along l'Orbe`
-
-Not yet supported:
-
-- `right bank of the Rhône`
+- `2km right bank of the Rhône`
 
 ## Architecture
 

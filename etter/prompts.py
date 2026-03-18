@@ -144,6 +144,10 @@ Confidence Scoring:
    * Idiomatic expressions with multiple interpretations
 
 Spatial Relation Selection Rules:
+- When the query refers to a specific side/bank of a linear feature (river, road):
+  * "rive droite", "right bank" → relation="right_bank"
+  * "rive gauche", "left bank" → relation="left_bank"
+  * Left/right is relative to the flow direction (downstream for rivers)
 - When reference location is a LINEAR feature (river, road, railway, path, stream, etc.):
   * Prefer 'along' over 'near' for proximity/distance queries. Example: "à 2km de la Venoge" (river) → relation='along', not 'near'
 - When reference location is an AREA feature (lake, water body, region, canton, etc.):

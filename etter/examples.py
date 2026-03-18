@@ -40,7 +40,7 @@ class ExampleQuery:
 
 # Define examples covering key scenarios
 EXAMPLES: list[ExampleQuery] = [
-    # Example 1: Simple containment (English)
+    # Simple containment (English)
     ExampleQuery(
         input="restaurants in Geneva",
         language="en",
@@ -63,7 +63,7 @@ EXAMPLES: list[ExampleQuery] = [
             original_query="restaurants in Geneva",
         ),
     ),
-    # Example 2: Buffer query with LLM-inferred distance (English)
+    # Buffer query with LLM-inferred distance (English)
     ExampleQuery(
         input="hotels within 5km of Lausanne",
         language="en",
@@ -86,7 +86,7 @@ EXAMPLES: list[ExampleQuery] = [
             original_query="hotels within 5km of Lausanne",
         ),
     ),
-    # Example 3: Directional (English)
+    # Directional (English)
     ExampleQuery(
         input="hiking north of Bern",
         language="en",
@@ -109,7 +109,7 @@ EXAMPLES: list[ExampleQuery] = [
             original_query="hiking north of Bern",
         ),
     ),
-    # Example 4: Spatial ambiguity - ring_only (English)
+    # Spatial ambiguity - ring_only (English)
     ExampleQuery(
         input="on the lake shore",
         language="en",
@@ -132,7 +132,7 @@ EXAMPLES: list[ExampleQuery] = [
             original_query="on the lake shore",
         ),
     ),
-    # Example 5: Time-based distance - walking (English)
+    # Time-based distance - walking (English)
     ExampleQuery(
         input="30 minutes walking from the station",
         language="en",
@@ -155,7 +155,7 @@ EXAMPLES: list[ExampleQuery] = [
             original_query="30 minutes walking from the station",
         ),
     ),
-    # Example 6: Complex query with multiple features (English)
+    # Complex query with multiple features (English)
     ExampleQuery(
         input="in the heart of a small village",
         language="en",
@@ -178,7 +178,32 @@ EXAMPLES: list[ExampleQuery] = [
             original_query="in the heart of a small village",
         ),
     ),
-    # Example 7: Multilingual and complex (French)
+    # Right bank of a river (French)
+    ExampleQuery(
+        input="rive droite du Rhône",
+        language="fr",
+        description="Right bank of a river - one-sided buffer on the right side relative to flow direction",
+        output=GeoQuery(
+            query_type="simple",
+            spatial_relation=SpatialRelation(relation="right_bank", category="buffer", explicit_distance=None),
+            reference_location=ReferenceLocation(
+                name="Rhône",
+                type="river",
+                type_confidence=0.95,
+            ),
+            buffer_config=BufferConfig(
+                distance_m=500, buffer_from="boundary", ring_only=False, side="right", inferred=True
+            ),
+            confidence_breakdown=ConfidenceScore(
+                overall=0.95,
+                location_confidence=0.95,
+                relation_confidence=0.95,
+                reasoning="'rive droite' clearly indicates the right bank of the river",
+            ),
+            original_query="rive droite du Rhône",
+        ),
+    ),
+    # Multilingual and complex (French)
     ExampleQuery(
         input="near Lake Geneva",
         language="en",

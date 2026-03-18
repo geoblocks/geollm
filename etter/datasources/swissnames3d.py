@@ -14,6 +14,7 @@ from typing import Any
 import geopandas as gpd
 import pyproj
 from rapidfuzz import fuzz
+from shapely import force_2d
 from shapely.geometry import mapping
 from shapely.ops import transform as shapely_transform
 
@@ -305,7 +306,8 @@ class SwissNames3DSource:
             bbox = None
         else:
             # Transform geometry from EPSG:2056 to WGS84 using the module-level transformer
-            wgs84_geom = shapely_transform(_TRANSFORMER.transform, geom)
+            # Drop Z coordinates — they are not needed and cause issues with single_sided buffers
+            wgs84_geom = shapely_transform(_TRANSFORMER.transform, force_2d(geom))
             geometry = mapping(wgs84_geom)
             bounds = wgs84_geom.bounds  # (minx, miny, maxx, maxy)
             bbox = (bounds[0], bounds[1], bounds[2], bounds[3])
