@@ -86,6 +86,28 @@ EXAMPLES: list[ExampleQuery] = [
             original_query="hotels within 5km of Lausanne",
         ),
     ),
+    ExampleQuery(
+        input="near Lausanne",
+        language="en",
+        description="Proximity to a city polygon → buffer from boundary, not center",
+        output=GeoQuery(
+            query_type="simple",
+            spatial_relation=SpatialRelation(relation="near", category="buffer", explicit_distance=None),
+            reference_location=ReferenceLocation(
+                name="Lausanne",
+                type="city",
+                type_confidence=0.95,
+            ),
+            buffer_config=BufferConfig(distance_m=2000, buffer_from="boundary", ring_only=False, inferred=True),
+            confidence_breakdown=ConfidenceScore(
+                overall=0.90,
+                location_confidence=0.95,
+                relation_confidence=0.90,
+                reasoning="'near Lausanne' → city is a polygon feature → near with buffer from boundary",
+            ),
+            original_query="near Lausanne",
+        ),
+    ),
     # Directional (English)
     ExampleQuery(
         input="hiking north of Bern",
@@ -207,21 +229,21 @@ EXAMPLES: list[ExampleQuery] = [
     ExampleQuery(
         input="near Lake Geneva",
         language="en",
-        description="Proximity to geographic feature with inferred distance based on feature scale",
+        description="Proximity to a lake feature → use on_shores_of (ring buffer around boundary)",
         output=GeoQuery(
             query_type="simple",
-            spatial_relation=SpatialRelation(relation="near", category="buffer", explicit_distance=5000),
+            spatial_relation=SpatialRelation(relation="on_shores_of", category="buffer", explicit_distance=None),
             reference_location=ReferenceLocation(
                 name="Lake Geneva",
                 type="lake",
                 type_confidence=0.95,
             ),
-            buffer_config=BufferConfig(distance_m=5000, buffer_from="center", ring_only=False, inferred=False),
+            buffer_config=BufferConfig(distance_m=1000, buffer_from="boundary", ring_only=True, inferred=True),
             confidence_breakdown=ConfidenceScore(
                 overall=0.90,
                 location_confidence=0.95,
-                relation_confidence=0.85,
-                reasoning="Medium-scale feature (lake) → 5km proximity radius inferred",
+                relation_confidence=0.90,
+                reasoning="'near Lake Geneva' → lake is an AREA feature → on_shores_of with ring buffer",
             ),
             original_query="near Lake Geneva",
         ),

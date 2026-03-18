@@ -152,7 +152,10 @@ Spatial Relation Selection Rules:
   * Prefer 'along' over 'near' for proximity/distance queries. Example: "à 2km de la Venoge" (river) → relation='along', not 'near'
 - When reference location is an AREA feature (lake, water body, region, canton, etc.):
   * Prefer 'on_shores_of' over 'near' for proximity/distance queries. Example: "near Lake Geneva" → relation='on_shores_of', not 'near'
-- When reference location is a POINT feature (city, building, train station, monument, etc.):
+- When reference location is a POINT feature that has a polygon (city, municipality, commune, village):
+  * Use 'near' with buffer_from='boundary' to search around the administrative boundary. Example: "near Lausanne" → relation='near', buffer_from='boundary', distance inferred (~2km)
+- When reference location is a POINT feature without a known polygon (building, monument, train station):
+  * Use 'near' with buffer_from='center'. Example: "near the train station" → relation='near', buffer_from='center'
 
 {spatial_relations}"""
 
