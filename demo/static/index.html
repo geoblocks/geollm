@@ -4,15 +4,37 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>etter Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <!-- OpenLayers CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.8.0/ol.css" type="text/css" />
     <style>
+      :root {
+        --font: 'JetBrains Mono', monospace;
+        --accent: #03b000;
+        --accent-hover: #029000;
+        --bg: #ffffff;
+        --bg-subtle: #f5f5f5;
+        --border: #d0d0d0;
+        --text: #1a1a1a;
+        --text-muted: #666;
+        --text-faint: #aaa;
+        --text-label: #555;
+        --text-error: #cc3333;
+        --disabled-bg: #cccccc;
+        --disabled-text: #888;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
       body,
       html {
         margin: 0;
         padding: 0;
         height: 100%;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-family: var(--font);
       }
       #map {
         width: 100%;
@@ -22,111 +44,129 @@
         filter: grayscale(1);
       }
       .search-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
         position: absolute;
-        top: 20px;
+        top: 16px;
         left: 50%;
         transform: translateX(-50%);
         z-index: 1000;
-        background: white;
-        padding: 15px;
+        background: var(--bg);
+        padding: 12px;
         border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        min-width: 600px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        width: min(600px, calc(100vw - 32px));
+      }
+      .search-container img.logo {
+        display: block;
+        height: 30px;
       }
       .search-input-row {
         display: flex;
-        gap: 10px;
-        margin-bottom: 10px;
+        gap: 8px;
       }
       input[type="text"] {
-        padding: 10px;
+        padding: 8px 10px;
         flex: 1;
-        border: 1px solid #ccc;
+        background: var(--bg-subtle);
+        color: var(--text);
+        border: 1px solid var(--border);
         border-radius: 4px;
-        font-size: 16px;
+        font-family: var(--font);
+        font-size: 14px;
+        outline: none;
+      }
+      input[type="text"]:focus {
+        border-color: var(--accent);
       }
       button {
-        padding: 10px 20px;
-        background: #007bff;
+        padding: 8px 18px;
+        background: var(--accent);
         color: white;
         border: none;
         border-radius: 4px;
         cursor: pointer;
-        font-size: 16px;
+        font-family: var(--font);
+        font-size: 14px;
       }
       button:hover {
-        background: #0056b3;
+        background: var(--accent-hover);
       }
       button:disabled {
-        background: #cccccc;
+        background: var(--disabled-bg);
+        color: var(--disabled-text);
         cursor: not-allowed;
       }
       .mode-toggle {
         display: flex;
         gap: 10px;
         align-items: center;
-        margin-bottom: 10px;
       }
       .mode-toggle label {
-        font-size: 14px;
+        font-size: 13px;
+        color: var(--text-label);
+      }
+      .mode-toggle input[type="checkbox"] {
+        accent-color: var(--accent);
+        cursor: pointer;
       }
       #status {
-        margin-top: 10px;
-        font-size: 14px;
-        color: #666;
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+      #status.error {
+        color: var(--text-error);
       }
       #reasoning-box {
-        margin-top: 10px;
-        padding: 10px;
-        background: #f5f5f5;
-        border-radius: 4px;
+        background: var(--bg-subtle);
         max-height: 150px;
         overflow-y: auto;
-        font-size: 13px;
+        font-size: 12px;
         display: none;
       }
       #reasoning-box.active {
         display: block;
       }
       .reasoning-item {
-        margin: 5px 0;
-        padding: 5px;
-        background: white;
-        border-left: 3px solid #007bff;
-        animation: fadeIn 0.3s;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        margin: 3px 0;
+        padding: 4px 8px;
+        background: var(--bg);
+        border-left: 1px solid var(--accent);
+        color: var(--text-muted);
       }
       .reasoning-item .timing {
-        font-size: 12px;
-        color: #888;
-        font-weight: 500;
+        font-size: 11px;
+        color: var(--text-faint);
         margin-left: 10px;
         white-space: nowrap;
-      }
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(-5px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-      .error {
-        color: red;
       }
     </style>
   </head>
   <body>
     <div class="search-container">
+      <a href="https://github.com/geoblocks/etter" target="_blank" rel="noopener noreferrer">
+        <img class="logo" src="/etter-logo.png" alt="etter" />
+      </a>
       <div class="mode-toggle">
-        <label> <input type="checkbox" id="streamMode" checked /> Enable streaming mode (show AI reasoning) </label>
+        <label><input type="checkbox" id="streamMode" checked /> Enable streaming mode</label>
       </div>
       <div class="search-input-row">
-        <input type="text" id="queryInput" placeholder="e.g., in the heart of Bern" value="in the heart of Bern" />
+        <input type="text" id="queryInput" list="query-examples" value="on the shores of the lac Morat"/>
+        <datalist id="query-examples">
+          <option value="walk in the Gros-de-Vaud" />
+          <option value="on the shores of the lac Morat" />
+          <option value="near Lausanne" />
+          <option value="south west of Lausanne" />
+          <option value="5km north of Lausanne" />
+          <option value="walking distance from Zurich main railway station" />
+          <option value="15 min biking from Zurich main railway station" />
+          <option value="along l'Orbe" />
+          <option value="2km right bank of the Rhône" />
+        </datalist>
         <button onclick="executeQuery()" id="searchBtn">Search</button>
       </div>
       <div id="status"></div>
@@ -272,20 +312,20 @@
                 // Add reasoning step with optional timing
                 const reasoningItem = document.createElement("div");
                 reasoningItem.className = "reasoning-item";
-                
+
                 // Create content span
                 const contentSpan = document.createElement("span");
                 contentSpan.textContent = eventData.content;
                 reasoningItem.appendChild(contentSpan);
-                
+
                 // Add timing if present
                 if (eventData.duration_ms !== undefined) {
                   const timingSpan = document.createElement("span");
                   timingSpan.className = "timing";
-                  timingSpan.textContent = `${eventData.duration_ms.toFixed(1)} ms`;
+                  timingSpan.textContent = `${Math.round(eventData.duration_ms)} ms`;
                   reasoningItem.appendChild(timingSpan);
                 }
-                
+
                 reasoningBox.appendChild(reasoningItem);
                 reasoningBox.scrollTop = reasoningBox.scrollHeight;
               } else if (eventData.type === "result") {
