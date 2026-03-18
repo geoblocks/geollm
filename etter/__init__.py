@@ -7,7 +7,7 @@ Parse location queries into structured geographic queries using LLM.
 # Main API
 # Exceptions
 # Datasources
-from .datasources import GeoDataSource, SwissNames3DSource
+from .datasources import CompositeDataSource, GeoDataSource, IGNBDCartoSource, PostGISDataSource, SwissNames3DSource
 from .exceptions import (
     GeoFilterError,
     LowConfidenceError,
@@ -57,6 +57,9 @@ __all__ = [
     # Datasources
     "GeoDataSource",
     "SwissNames3DSource",
+    "IGNBDCartoSource",
+    "CompositeDataSource",
+    "PostGISDataSource",
     # Spatial
     "apply_spatial_relation",
 ]

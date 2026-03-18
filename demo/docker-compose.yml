@@ -1,0 +1,66 @@
+services:
+  postgis:
+    image: postgis/postgis:18-3.6
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-geodata}
+    volumes:
+      - postgis_data:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB:-geodata}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  data-loader:
+    build:
+      context: ..
+      dockerfile: demo/Dockerfile
+    command: >
+      uv run python scripts/load_data_postgis.py
+    environment:
+      ETTER_DB_URL: >-
+        postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgis:5432/${POSTGRES_DB:-geodata}
+      SWISSNAMES3D_PATH: /data
+      IGN_BDCARTO_PATH: /data/bdcarto
+      SWISSNAMES3D_TABLE: ${SWISSNAMES3D_TABLE:-swissnames3d}
+      IGN_BDCARTO_TABLE: ${IGN_BDCARTO_TABLE:-ign_bdcarto}
+      IF_EXISTS: ${IF_EXISTS:-replace}
+    volumes:
+      - ../data:/data:ro
+      - ../scripts:/app/scripts:ro
+    depends_on:
+      postgis:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: ..
+      dockerfile: demo/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # PostGIS mode: set ETTER_DB_URL to use PostGISDataSource
+      ETTER_DB_URL: >-
+        postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgis:5432/${POSTGRES_DB:-geodata}
+      SWISSNAMES3D_TABLE: ${SWISSNAMES3D_TABLE:-swissnames3d}
+      IGN_BDCARTO_TABLE: ${IGN_BDCARTO_TABLE:-ign_bdcarto}
+    depends_on:
+      postgis:
+        condition: service_healthy
+      data-loader:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  postgis_data:

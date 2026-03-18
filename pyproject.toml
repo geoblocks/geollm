@@ -18,6 +18,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+postgis = [
+    "sqlalchemy>=2.0",
+    "geoalchemy2>=0.15",
+]
 dev = [
     "langchain-openai>=1.1",
     "pytest>=9.0",
@@ -25,6 +29,11 @@ dev = [
     "ruff>=0.15",
     "ty>=0.0",
     "pdoc>=14.0",
+    # PostGIS integration tests
+    "testcontainers[postgres]>=4.0",
+    "psycopg2-binary>=2.9",
+    "sqlalchemy>=2.0",
+    "geoalchemy2>=0.15",
 ]
 
 [build-system]
@@ -55,4 +64,9 @@ dev = [
     "uvicorn>=0.41",
     "mcp[cli]>=1.26",
     "rich>=13.0",
+    # PostGIS integration tests
+    "testcontainers[postgres]>=4.0",
+    "psycopg2-binary>=2.9",
+    "sqlalchemy>=2.0",
+    "geoalchemy2>=0.15",
 ]

@@ -1,5 +1,5 @@
 """
-Location type hierarchy and fuzzy matching for geographic features.
+Location type hierarchy, fuzzy matching, and geometry merging for geographic features.
 
 This module defines the standard type hierarchy used across all datasources.
 Each datasource maps its native types to this hierarchy, enabling consistent
@@ -9,6 +9,14 @@ The hierarchy is organized into categories (water, administrative, settlement, e
 to support fuzzy matching. For example, querying type="water" matches features
 of type "lake", "river", "pond", etc.
 """
+
+from __future__ import annotations
+
+from collections import defaultdict
+from typing import Any
+
+from shapely.geometry import mapping, shape
+from shapely.ops import unary_union
 
 # Type hierarchy: category → list of concrete types
 # This enables fuzzy matching (category matches multiple concrete types)
@@ -184,3 +192,70 @@ def get_matching_types(type_hint: str) -> list[str]:
 
     # Unknown type - return empty (no match)
     return []
+
+
+# Segment merging
+
+# Types for which same-name features should be merged into a single geometry.
+# Continuous geographic features (rivers, ridges, …) are often split into many
+# individual segments in source datasets.  Settlement and administrative types
+# are intentionally excluded — two places with the same name are distinct.
+MERGE_TYPES: frozenset[str] = frozenset(
+    [
+        # Hydrography
+        "river",
+        "lake",
+        "pond",
+        "glacier",
+        # Landforms
+        "mountain",
+        "peak",
+        "ridge",
+        "valley",
+        "plain",
+        "massif",
+        "pass",
+        # Protected areas / forests
+        "park",
+        "nature_reserve",
+        "forest",
+        # Transport linear features
+        "road",
+        "railway",
+        "bridge",
+        "tunnel",
+    ]
+)
+
+
+def merge_segments(features: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Merge features that share the same (name, type) by unioning their geometries,
+    but only for types listed in ``MERGE_TYPES``.
+
+    Rivers, ridges and other continuous geographic features are often split into
+    many individual segments in source datasets.  When the caller queries for
+    "Rhône" they expect the full course of the river, not an arbitrary single
+    segment.  Settlement and administrative types (city, municipality, …) are
+    excluded because two places with the same name are distinct and must not be
+    conflated.
+    """
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for f in features:
+        props = f.get("properties", {})
+        key = (str(props.get("name", "")), str(props.get("type", "")))
+        groups[key].append(f)
+
+    merged: list[dict[str, Any]] = []
+    for (_name, ftype), group_features in groups.items():
+        if len(group_features) == 1 or ftype not in MERGE_TYPES:
+            merged.extend(group_features)
+        else:
+            geoms = [shape(f["geometry"]) for f in group_features if f.get("geometry") and f["geometry"].get("type")]
+            combined = unary_union(geoms)
+            base = dict(group_features[0].items())
+            base["geometry"] = mapping(combined)
+            bounds = combined.bounds
+            base["bbox"] = tuple(bounds) if bounds else None
+            merged.append(base)
+    return merged

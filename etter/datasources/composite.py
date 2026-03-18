@@ -35,9 +35,7 @@ class CompositeDataSource:
             raise ValueError("At least one datasource is required.")
         self._sources: list[GeoDataSource] = list(sources)
 
-    # ------------------------------------------------------------------
     # Public API (mirrors GeoDataSource protocol)
-    # ------------------------------------------------------------------
 
     def search(
         self,

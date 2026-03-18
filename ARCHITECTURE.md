@@ -101,6 +101,18 @@ Resolves location names to geometries.
     - Type filtering with fuzzy matching (lake, city, canton, etc.)
     - Coordinate conversion (CH1903+ → WGS84)
     - ~80 grouped geographic types
+  - `IGNBDCartoSource`: Wraps IGN BD-CARTO data (GeoPackage). Handles:
+    - 13 thematic layers (administrative, hydrography, named places, protected areas)
+    - French article stripping for name normalization
+    - Coordinate conversion (Lambert-93 → WGS84)
+  - `PostGISDataSource`: Generic DB-backed datasource for any PostGIS table. Handles:
+    - Accepts a SQLAlchemy `Engine` or a connection URL string (DB-agnostic)
+    - ILIKE-based case-insensitive search with `pg_trgm` fuzzy fallback
+    - CRS reprojection via `ST_Transform` when the stored CRS differs from WGS84
+    - Optional `type_map` for normalizing raw DB type values to the etter hierarchy
+    - No driver is bundled — the user provides it via the connection URL
+      (e.g. `postgresql+psycopg2://...`)
+  - `CompositeDataSource`: Fan-out aggregator over multiple datasources
 
 ### 3. Spatial Operations (Layer 3)
 
@@ -290,10 +302,120 @@ etter/
 ├── datasources/           # Layer 2: Data Resolution
 │   ├── protocol.py        # GeoDataSource Protocol
 │   ├── location_types.py  # Type hierarchy & fuzzy matching
-│   └── swissnames3d.py    # SwissNames3D Implementation
+│   ├── swissnames3d.py    # SwissNames3D Implementation (Shapefile)
+│   ├── ign_bdcarto.py     # IGN BD-CARTO Implementation (GeoPackage)
+│   ├── postgis.py         # PostGISDataSource (generic DB-backed)
+│   └── composite.py       # Fan-out aggregator
 ├── spatial.py             # Layer 3: Geometry Transformation
 └── __init__.py            # Public exports
+
+demo/
+├── main.py                # FastAPI demo server (file-based or PostGIS mode)
+├── Dockerfile             # Image for the FastAPI service
+├── docker-compose.yml     # PostGIS demo stack (see below)
+└── static/                # OpenLayers map UI
+
+scripts/
+├── extract_bdcarto.sh     # Extract IGN 7z archive
+└── load_data_postgis.py   # Load shapefiles/gpkg into PostGIS
 ```
+
+---
+
+## PostGIS Demo Stack
+
+The `demo/docker-compose.yml` provides a fully containerised version of the
+demo using PostGIS as the geodata backend.
+
+### Services
+
+| Service | Image / Build | Purpose |
+|---|---|---|
+| `postgis` | `postgis/postgis:18-3.6` | PostgreSQL 18 + PostGIS; stores data in `/var/lib/postgresql` |
+| `data-loader` | `demo/Dockerfile` | One-shot container; runs `scripts/load_data_postgis.py` then exits |
+| `api` | `demo/Dockerfile` | FastAPI server; starts after `data-loader` completes successfully |
+
+### Normalized Table Schema
+
+Both datasets are loaded into PostGIS using the same unified schema:
+
+```sql
+CREATE TABLE public.swissnames3d (
+    id    TEXT,
+    name  TEXT NOT NULL,
+    type  TEXT,
+    geom  GEOMETRY(Geometry, 4326)
+);
+
+CREATE TABLE public.ign_bdcarto (
+    id    TEXT,
+    name  TEXT NOT NULL,
+    type  TEXT,
+    geom  GEOMETRY(Geometry, 4326)
+);
+```
+
+All geometries are stored in WGS84 (EPSG:4326). The loader reprojects from
+the native CRS (EPSG:2056 for SwissNames3D, EPSG:2154 for IGN BD-CARTO) at
+load time.
+
+### Quick Start
+
+```bash
+# 1. Download geodata (if not already present)
+make download-data          # SwissNames3D shapefiles → data/
+make download-data-ign      # IGN BD-CARTO gpkg files → data/bdcarto/
+
+# 2. Set your OpenAI API key
+export OPENAI_API_KEY=sk-...
+
+# 3. Start the full stack
+docker compose -f demo/docker-compose.yml up
+
+# The API is available at http://localhost:8000
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `ETTER_DB_URL` | — | SQLAlchemy connection URL; enables PostGIS mode in `demo/main.py` |
+| `POSTGRES_USER` | `etter` | PostgreSQL user |
+| `POSTGRES_PASSWORD` | `etter` | PostgreSQL password |
+| `POSTGRES_DB` | `geodata` | PostgreSQL database name |
+| `SWISSNAMES3D_TABLE` | `swissnames3d` | Target table for SwissNames3D |
+| `IGN_BDCARTO_TABLE` | `ign_bdcarto` | Target table for IGN BD-CARTO |
+| `DB_SCHEMA` | `public` | PostgreSQL schema |
+
+### Demo Mode Selection
+
+`demo/main.py` auto-detects which mode to use:
+
+- **PostGIS mode** — when `ETTER_DB_URL` is set (used by docker-compose)
+- **File mode** — when `ETTER_DB_URL` is absent (original behaviour; uses `SWISSNAMES3D_PATH` / `IGN_BDCARTO_PATH`)
+
+---
+
+### Installing the PostGIS Extra
+
+To use `PostGISDataSource` outside the demo (e.g., in your own application):
+
+```bash
+pip install etter[postgis]          # installs sqlalchemy + geoalchemy2
+pip install psycopg2-binary         # or your preferred driver
+```
+
+```python
+from etter.datasources import PostGISDataSource
+
+source = PostGISDataSource(
+    connection="postgresql+psycopg2://user:pass@localhost/mydb",
+    table="public.my_geodata",
+)
+results = source.search("Lausanne", type="city")
+```
+
+---
 
 ---
 
@@ -301,7 +423,8 @@ etter/
 
 - **LLM**: Provider, Model, Temperature
 - **Spatial**: Default distances, buffer offsets
-- **Datasource**: Path to SwissNames3D data file
+- **Datasource (file mode)**: Path to SwissNames3D shapefiles / IGN BD-CARTO GeoPackages
+- **Datasource (PostGIS mode)**: SQLAlchemy connection URL + table names
 
 ---
 
@@ -309,18 +432,21 @@ etter/
 
 All three layers are **fully implemented and integrated**:
 
-- ✅ **Layer 1 (Parser)**: Complete - Extracts spatial relations from natural language using LLM
-- ✅ **Layer 2 (Datasource)**: Complete - SwissNames3D resolves location names to WGS84 geometries
-- ✅ **Layer 3 (Spatial Operations)**: Complete - Transforms geometries using spatial relations (buffers, directional sectors, etc.)
-- ✅ **Integration**: Full end-to-end workflow with demo API server
+- ✅ **Layer 1 (Parser)**: Complete — Extracts spatial relations from natural language using LLM
+- ✅ **Layer 2 (Datasource)**: Complete — Multiple implementations:
+  - `SwissNames3DSource` — swisstopo shapefiles → WGS84 GeoJSON
+  - `IGNBDCartoSource` — IGN BD-CARTO GeoPackages → WGS84 GeoJSON
+  - `PostGISDataSource` — generic PostGIS table → WGS84 GeoJSON (DB-agnostic)
+  - `CompositeDataSource` — fan-out aggregator
+- ✅ **Layer 3 (Spatial Operations)**: Complete — Transforms geometries using spatial relations (buffers, directional sectors, etc.)
+- ✅ **Integration**: Full end-to-end workflow with demo API server (file mode and PostGIS mode)
 
-The demo API at `/demo/main.py` demonstrates the complete pipeline:
+The demo API at `demo/main.py` demonstrates the complete pipeline:
 ```
 Query → Parser → Datasource → Spatial Ops → GeoJSON Result
 ```
 
 ## Not Yet Implemented
 
-- Additional datasource implementations (beyond SwissNames3D)
 - Complex query types: `compound` (multi-step), `split` (area division), `boolean` (AND/OR/NOT)
 - Some edge cases in spatial operations
