@@ -341,9 +341,12 @@ class PostGISDataSource:
         Python before the query is sent to the DB.
         """
         type_clause, type_params = self._type_filter_sql(type_filter)
+        name_expr = f"lower({self._name_col})"
+        if self._check_unaccent(conn):
+            name_expr = f"unaccent({name_expr})"
         sql = sa.text(
             f"SELECT {cols} FROM {self._table} "  # noqa: S608
-            f"WHERE lower({self._name_col}) = :query{type_clause} "
+            f"WHERE {name_expr} = :query{type_clause} "
             f"LIMIT :limit"
         )
         params: dict[str, Any] = {
