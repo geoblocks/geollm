@@ -9,10 +9,11 @@ Shapely is used internally for geometry operations.
 import math
 from typing import Any
 
-from shapely.geometry import mapping, shape
+from shapely.geometry import MultiLineString, mapping, shape
 from shapely.geometry.base import BaseGeometry
+from shapely.geometry.linestring import LineString
 from shapely.geometry.polygon import Polygon
-from shapely.ops import linemerge
+from shapely.ops import linemerge, unary_union
 
 from .models import BufferConfig, SpatialRelation
 from .spatial_config import SpatialRelationConfig
@@ -122,40 +123,62 @@ def _apply_buffer(geometry: dict[str, Any], config: BufferConfig) -> dict[str, A
     return mapping(buffered)
 
 
+def _collect_line_parts(geom: BaseGeometry) -> list[LineString]:
+    """Return a flat list of LineStrings from a LineString or MultiLineString."""
+    if isinstance(geom, LineString):
+        return [geom]
+    if isinstance(geom, MultiLineString):
+        merged = linemerge(geom)
+        if isinstance(merged, LineString):
+            return [merged]
+        return [part for part in merged.geoms if isinstance(part, LineString)]
+    return []
+
+
+def _offset_coords(line: LineString, offset_dist: float) -> list[tuple[float, ...]]:
+    """Return coordinates of the offset curve of a LineString, flattened across parts."""
+    offset = line.offset_curve(offset_dist)
+    if offset.is_empty:
+        return []
+    if isinstance(offset, MultiLineString):
+        merged = linemerge(offset)
+        if isinstance(merged, LineString):
+            return list(merged.coords)
+        return [coord for part in merged.geoms for coord in part.coords]
+    return list(offset.coords)
+
+
 def _one_sided_buffer(geom: BaseGeometry, distance_deg: float, side: str) -> BaseGeometry:
     """
     Create a one-sided buffer by clipping a symmetric buffer to one side of a line.
 
-    Uses offset_curve to build a clipping polygon, then intersects with the
-    full symmetric buffer. This avoids artifacts from Shapely's single_sided=True
-    on sinuous lines with large distances.
+    Uses offset_curve to build a clipping polygon per segment, then intersects each
+    with the segment's buffer and unions the results. This avoids artifacts from
+    Shapely's single_sided=True on sinuous lines with large distances, and correctly
+    handles MultiLineString inputs (e.g. rivers stored as disconnected segments).
     """
-    full_buffer = geom.buffer(distance_deg)
-
     # offset_curve: positive = left, negative = right
     offset_dist = distance_deg if side == "left" else -distance_deg
-    offset_line = geom.offset_curve(offset_dist)
 
-    if offset_line.is_empty:
-        return full_buffer
+    parts = _collect_line_parts(geom)
+    if not parts:
+        return geom.buffer(distance_deg)
 
-    # Merge multi-part offsets into a single line when possible
-    if offset_line.geom_type == "MultiLineString":
-        offset_line = linemerge(offset_line)
+    clipped_parts: list[BaseGeometry] = []
+    for part in parts:
+        part_buffer = part.buffer(distance_deg)
+        off_coords = _offset_coords(part, offset_dist)
 
-    # Collect coordinates from offset (handles both LineString and MultiLineString)
-    if offset_line.geom_type == "MultiLineString":
-        offset_coords = []
-        for part in offset_line.geoms:
-            offset_coords.extend(part.coords)
-    else:
-        offset_coords = list(offset_line.coords)
+        if not off_coords:
+            clipped_parts.append(part_buffer)
+            continue
 
-    # Build a clip polygon: original line coords + reversed offset coords
-    clip_coords = list(geom.coords) + offset_coords[::-1]
-    clip_poly = Polygon(clip_coords).buffer(0)  # buffer(0) fixes any self-intersections
+        # Build a clip polygon: original part coords + reversed offset coords
+        clip_coords = list(part.coords) + off_coords[::-1]
+        clip_poly = Polygon(clip_coords).buffer(0)  # buffer(0) fixes self-intersections
+        clipped_parts.append(part_buffer.intersection(clip_poly))
 
-    return full_buffer.intersection(clip_poly)
+    return unary_union(clipped_parts)
 
 
 def _apply_directional(
