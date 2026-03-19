@@ -154,6 +154,12 @@ class PostGISDataSource:
         else:
             self._engine = connection
 
+        try:
+            with self._engine.connect() as conn:
+                conn.execute(sa.text(f"SELECT 1 FROM {table} LIMIT 1"))
+        except Exception as exc:
+            raise ValueError(f"Failed to connect to database or access table {table!r}") from exc
+
         self._table = table
         self._name_col = name_column
         self._type_col = type_column
