@@ -48,31 +48,23 @@ class CompositeDataSource:
         max_results: int = 10,
     ) -> list[dict[str, Any]]:
         """
-        Search all registered sources and return merged, deduplicated results.
+        Search all registered sources and return merged.
 
         Args:
             name: Location name to search for.
             type: Optional type hint passed through to every source.
-            max_results: Maximum total results to return.
+            max_results: Maximum results per source.
 
         Returns:
             List of GeoJSON Feature dicts, merged from all sources.
         """
-        seen: set[tuple[str, str]] = set()
         merged: list[dict[str, Any]] = []
 
         for source in self._sources:
             for feature in source.search(name, type=type, max_results=max_results):
-                props = feature.get("properties", {})
-                key = (
-                    str(props.get("name", "")).lower(),
-                    str(props.get("type", "")),
-                )
-                if key not in seen:
-                    seen.add(key)
-                    merged.append(feature)
-                    if len(merged) >= max_results:
-                        return merged
+                merged.append(feature)
+                if len(merged) >= max_results:
+                    return merged
 
         return merged
 
