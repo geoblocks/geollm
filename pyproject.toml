@@ -24,6 +24,7 @@ dev = [
     "pytest-cov>=7.0",
     "ruff>=0.15",
     "ty>=0.0",
+    "pdoc>=14.0",
 ]
 
 [build-system]
