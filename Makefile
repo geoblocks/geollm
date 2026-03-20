@@ -1,4 +1,4 @@
-.PHONY: help install test lint format clean repl demo
+.PHONY: help install test lint format clean repl demo docs-preview
 
 help:
 	@echo "Setup:"
@@ -10,6 +10,9 @@ help:
 	@echo "Running:"
 	@echo "  make repl             	Run interactive REPL"
 	@echo "  make demo             	Run the demo app"
+	@echo ""
+	@echo "Docs:"
+	@echo "  make docs-preview     	Build and preview the documentation site"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  make clean            	Clean build artifacts"
@@ -49,6 +52,11 @@ $(DATA_PKT_IGN):
 	curl -L $(BDCARTO_URL) -o $(BDCARTO_ARCHIVE)
 	bash scripts/extract_bdcarto.sh $(BDCARTO_ARCHIVE) $(BDCARTO_DIR)
 	rm $(BDCARTO_ARCHIVE)
+
+docs-preview:
+	uv run pdoc etter etter.datasources --docformat google -t docs/pdoc-templates -o docs/public/api/
+	npm --prefix docs run build
+	npm --prefix docs run preview
 
 clean:
 	rm -rf .pytest_cache htmlcov .coverage
