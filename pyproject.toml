@@ -29,11 +29,15 @@ dev = [
     "ruff>=0.15",
     "ty>=0.0",
     "pdoc>=14.0",
+    "fastapi>=0.135",
+    "python-dotenv>=1.2",
+    "uvicorn>=0.41",
+    "mcp[cli]>=1.26",
+    "rich>=13.0",
     # PostGIS integration tests
     "testcontainers[postgres]>=4.0",
     "psycopg2-binary>=2.9",
-    "sqlalchemy>=2.0",
-    "geoalchemy2>=0.15",
+    "etter[postgis]",
 ]
 
 [build-system]
@@ -57,16 +61,3 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 
-[dependency-groups]
-dev = [
-    "fastapi>=0.135",
-    "python-dotenv>=1.2",
-    "uvicorn>=0.41",
-    "mcp[cli]>=1.26",
-    "rich>=13.0",
-    # PostGIS integration tests
-    "testcontainers[postgres]>=4.0",
-    "psycopg2-binary>=2.9",
-    "sqlalchemy>=2.0",
-    "geoalchemy2>=0.15",
-]
