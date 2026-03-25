@@ -1,136 +1,138 @@
 import os
+import readline  # noqa: F401 - enables arrow history and Ctrl+R for input()
 
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
+from rich import box
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
 from etter import GeoFilterParser
+
+console = Console()
 
 
 def print_result(result):
     """Pretty print the parsed query result."""
-    print()
-    print("=" * 60)
-    print("RESULT")
-    print("=" * 60)
+    loc = result.reference_location
+    rel = result.spatial_relation
+    conf = result.confidence_breakdown
 
-    # Reference location
-    print(f"\n📍 Location: {result.reference_location.name}")
-    if result.reference_location.type:
-        type_str = result.reference_location.type
-        if result.reference_location.type_confidence is not None:
-            type_str += f" (confidence: {result.reference_location.type_confidence:.2f})"
-        print(f"   Type: {type_str}")
-    else:
-        print("   Type: (not specified)")
+    def row(key, value):
+        table.add_row(f"[dim]{key}[/dim]", value)
+
+    table = Table(box=box.SIMPLE, show_header=False, pad_edge=False, padding=(0, 1))
+    table.add_column("Key", style="cyan", width=22)
+    table.add_column("Value")
+
+    # Query
+    table.add_section()
+    row("original query", f'[italic]"{result.original_query}"[/italic]')
+    row("query type", result.query_type)
+
+    # Location
+    table.add_section()
+    row("location name", f"[bold]{loc.name}[/bold]")
+    type_str = loc.type or "[dim](not specified)[/dim]"
+    if loc.type and loc.type_confidence is not None:
+        type_str += f"  [dim]{loc.type_confidence:.2f}[/dim]"
+    row("location type", type_str)
 
     # Spatial relation
-    print(f"\n🔗 Spatial Relation: {result.spatial_relation.relation} ({result.spatial_relation.category})")
+    table.add_section()
+    row("relation", f"[bold]{rel.relation}[/bold]")
+    row("category", rel.category)
+    if rel.explicit_distance is not None:
+        row("explicit distance", f"{rel.explicit_distance}m")
 
-    # Buffer config (if any)
+    # Buffer config
     if result.buffer_config:
-        print(f"\n📏 Buffer Distance: {result.buffer_config.distance_m}m")
-        print(f"   From: {result.buffer_config.buffer_from}")
+        buf = result.buffer_config
+        table.add_section()
+        row("buffer distance", f"{buf.distance_m}m")
+        row("buffer from", buf.buffer_from)
+        row("ring only", str(buf.ring_only))
+        row("side", str(buf.side) if buf.side else "[dim]none[/dim]")
+        row("inferred", str(buf.inferred))
 
-    # Confidence breakdown
-    print("\n📊 Confidence Scores:")
-    print(f"   Overall: {result.confidence_breakdown.overall:.2f}")
-    print(f"   Location: {result.confidence_breakdown.location_confidence:.2f}")
-    if result.confidence_breakdown.relation_confidence:
-        print(f"   Relation: {result.confidence_breakdown.relation_confidence:.2f}")
+    # Confidence
+    table.add_section()
+    row("overall confidence", _confidence_bar(conf.overall))
+    row("location confidence", _confidence_bar(conf.location_confidence))
+    if conf.relation_confidence is not None:
+        row("relation confidence", _confidence_bar(conf.relation_confidence))
+    if conf.reasoning:
+        row("reasoning", f"[dim]{conf.reasoning}[/dim]")
 
-    print()
+    console.print(Panel(table, title="[bold green]Result[/bold green]", border_style="green"))
+
+
+def _confidence_bar(value: float) -> str:
+    filled = int(value * 10)
+    bar = "█" * filled + "░" * (10 - filled)
+    color = "green" if value >= 0.7 else "yellow" if value >= 0.4 else "red"
+    return f"[{color}]{bar}[/{color}] {value:.2f}"
 
 
 def main():
     """Run the interactive REPL."""
-    # Load environment variables
     load_dotenv()
 
-    # Get API key from environment
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        print("❌ Error: OPENAI_API_KEY environment variable not set")
-        print("   Set it with: export OPENAI_API_KEY='sk-...'")
+        console.print("[bold red]Error:[/bold red] OPENAI_API_KEY environment variable not set")
+        console.print("  Set it with: [dim]export OPENAI_API_KEY='sk-...'[/dim]")
         return
 
-    # Initialize LLM
-    print("🔄 Initializing etter...")
-    try:
-        llm = init_chat_model(
-            model="gpt-4o",
-            model_provider="openai",
-            temperature=0,  # Deterministic for parsing
-            api_key=api_key,
+    with console.status("[bold blue]Initializing etter...[/bold blue]"):
+        try:
+            llm = init_chat_model(
+                model="gpt-4o",
+                model_provider="openai",
+                temperature=0,
+                api_key=api_key,
+            )
+        except Exception as e:
+            console.print(f"[bold red]Failed to initialize LLM:[/bold red] {e}")
+            return
+
+        try:
+            parser = GeoFilterParser(llm=llm, confidence_threshold=0.6, strict_mode=False)
+        except Exception as e:
+            console.print(f"[bold red]Failed to initialize parser:[/bold red] {e}")
+            return
+
+    console.print("[bold green]✓[/bold green] etter initialized successfully!\n")
+    console.print(
+        Panel(
+            "Enter natural language geographic queries.\nType [bold]quit[/bold] to exit.",
+            title="[bold]etter Interactive REPL[/bold]",
+            border_style="blue",
         )
-    except Exception as e:
-        print(f"❌ Failed to initialize LLM: {e}")
-        return
-
-    # Initialize parser
-    try:
-        parser = GeoFilterParser(llm=llm, confidence_threshold=0.6, strict_mode=False)
-    except Exception as e:
-        print(f"❌ Failed to initialize parser: {e}")
-        return
-
-    print("✅ etter initialized successfully!")
-    print()
-    print("=" * 60)
-    print("etter Interactive REPL")
-    print("=" * 60)
-    print("Enter natural language geographic queries.")
-    print("Type 'help' for available commands or 'quit' to exit.")
-    print()
+    )
+    console.print()
 
     while True:
         try:
-            # Get user input
-            query = input("🔍 Query: ").strip()
+            query = input("\001\033[1;36m\002Query\001\033[0m\002: ").strip()
 
             if not query:
                 continue
 
-            # Handle special commands
-            if query.lower() == "quit" or query.lower() == "exit":
-                print("👋 Goodbye!")
+            if query.lower() in ("quit", "exit"):
+                console.print("\n[bold]Goodbye![/bold]")
                 break
 
-            if query.lower() == "help":
-                print()
-                print("Available commands:")
-                print("  help    - Show this help message")
-                print("  quit    - Exit the REPL")
-                print("  relations - List available spatial relations")
-                print()
-                print("Example queries:")
-                print("  - 'in Bern'")
-                print("  - 'near Lake Geneva'")
-                print("  - 'north of Zurich'")
-                print("  - 'Bushaltestellen in Zürich' (German)")
-                print()
-                continue
-
-            if query.lower() == "relations":
-                print()
-                print("Available Spatial Relations:")
-                print("=" * 60)
-                print("Containment:", ", ".join(parser.get_available_relations("containment")))
-                print("Buffer:", ", ".join(parser.get_available_relations("buffer")))
-                print("Directional:", ", ".join(parser.get_available_relations("directional")))
-                print()
-                continue
-
-            # Parse the query
-            print("⏳ Processing...")
-            result = parser.parse(query)
+            with console.status("[dim]Processing...[/dim]"):
+                result = parser.parse(query)
             print_result(result)
 
-        except KeyboardInterrupt:
-            print("\n👋 Interrupted. Goodbye!")
+        except (KeyboardInterrupt, EOFError):
+            console.print("\n[bold]Goodbye![/bold]")
             break
         except Exception as e:
-            print(f"\n❌ Error: {e}")
-            print()
+            console.print(f"\n[bold red]Error:[/bold red] {e}\n")
 
 
 if __name__ == "__main__":

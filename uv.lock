@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -469,6 +469,7 @@ dev = [
     { name = "fastapi" },
     { name = "mcp", extra = ["cli"] },
     { name = "python-dotenv" },
+    { name = "rich" },
     { name = "uvicorn" },
 ]
 
@@ -494,6 +495,7 @@ dev = [
     { name = "fastapi", specifier = ">=0.135" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.26" },
     { name = "python-dotenv", specifier = ">=1.2" },
+    { name = "rich", specifier = ">=13.0" },
     { name = "uvicorn", specifier = ">=0.41" },
 ]
 

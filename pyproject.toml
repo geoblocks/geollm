@@ -54,4 +54,5 @@ dev = [
     "python-dotenv>=1.2",
     "uvicorn>=0.41",
     "mcp[cli]>=1.26",
+    "rich>=13.0",
 ]
