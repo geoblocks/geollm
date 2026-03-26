@@ -11,6 +11,9 @@ It uses Large Language Models (LLMs) to understand multilingual queries and extr
 
 **Key Principle:** etter's sole purpose is to extract the **geographic filter** from user queries. It does NOT handle feature/activity identification or search execution.
 
+> [!TIP]
+> Documentation available at [https://geoblocks.github.io/etter/](https://geoblocks.github.io/etter/)
+
 ## Sponsorship
 
 [![camptocamp logo](./images/camptocamp-logo.png)](https://www.camptocamp.com)
