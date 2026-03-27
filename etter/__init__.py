@@ -4,6 +4,13 @@ etter - Natural Language Geographic Query Parsing
 Parse location queries into structured geographic queries using LLM.
 """
 
+from importlib.metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("etter")
+except PackageNotFoundError:  # running from source without install
+    __version__ = "unknown"
+
 # Main API
 # Exceptions
 # Datasources
