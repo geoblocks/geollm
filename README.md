@@ -195,6 +195,7 @@ Structured output model representing the parsed geographic filter.
 - `near`: Proximity with context-aware distance (default 5km, LLM infers based on activity, feature scale, and intent)
 - `on_shores_of`: 1km ring buffer (excludes water body)
 - `along`: 500m buffer for linear features
+- `left_bank`, `right_bank`: Buffer on one side of a linear feature (river, road) relative to its flow direction
 - `in_the_heart_of`: Erosion for central areas (default -500m, LLM infers based on area size)
 
 ### Directional

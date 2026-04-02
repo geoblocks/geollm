@@ -96,6 +96,10 @@ config.register_relation(RelationConfig(
     description="Very close proximity",
     default_distance_m=1000,
     buffer_from="center",
+    ring_only=False,  # Exclude reference feature for ring buffers
+    side=None,        # "left" or "right" for one-sided buffers
+    sector_angle_degrees=None,  # For custom directional sectors
+    direction_angle_degrees=None,  # Direction in degrees (0=N, 90=E, 180=S, 270=W)
 ))
 
 parser = GeoFilterParser(llm=llm, spatial_config=config)

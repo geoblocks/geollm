@@ -100,7 +100,7 @@ Extracts intent from text using an LLM.
 - **Output**: `GeoQuery` object (Pydantic model)
 - **Key Features**:
   - Multilingual support
-  - 13 spatial relations (containment, buffer, directional)
+  - 15 spatial relations (containment, buffer, directional)
   - Distance inference ("10 min walk" → 833m)
   - Confidence scoring
 
@@ -120,7 +120,7 @@ Resolves location names to geometries.
     - Coordinate conversion (CH1903+ → WGS84)
     - ~80 grouped geographic types
   - `IGNBDCartoSource`: Wraps IGN BD-CARTO data (GeoPackage). Handles:
-    - 13 thematic layers (administrative, hydrography, named places, protected areas)
+    - 14 thematic layers (administrative, hydrography, named places, protected areas)
     - French article stripping for name normalization
     - Coordinate conversion (Lambert-93 → WGS84)
   - `PostGISDataSource`: Generic DB-backed datasource for any PostGIS table. Handles:
@@ -177,12 +177,13 @@ Standard GeoJSON dictionary structure:
 
 ---
 
-## Spatial Relations (13 Total)
+## Spatial Relations (15 Total)
 
 | Category (`category=`) | Relations | Behavior |
 |------------------------|-----------|----------|
 | **`containment`** | `in` | Exact geometry match |
 | **`buffer`** | `near`, `along` | Circular/Linear buffer with context-aware distances |
+| **`buffer`** (one-sided) | `left_bank`, `right_bank` | Buffer on one side of a linear feature relative to flow direction |
 | **`buffer`** (ring) | `on_shores_of` | Buffer - Original (Donut) |
 | **`buffer`** (erosion) | `in_the_heart_of` | Negative buffer (shrink) with context-aware depth |
 | **`directional`** | `north_of`, `south_of`, `east_of`, `west_of`, `northeast_of`, `southeast_of`, `southwest_of`, `northwest_of` | 90° Sector Wedge |

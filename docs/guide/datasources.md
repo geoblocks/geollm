@@ -98,7 +98,7 @@ See [`location_types`](../api/etter.html#etter.datasources.location_types) for t
 
 ## Implementing a Custom Datasource
 
-Any class with a `search` method matching the protocol qualifies:
+Any class with a `search` method and `get_available_types` method matching the protocol qualifies:
 
 ```python
 class MyDataSource:
@@ -113,6 +113,10 @@ class MyDataSource:
     ) -> list[dict]:
         # Return standard GeoJSON feature dicts
         ...
+
+    def get_by_id(self, feature_id: str) -> dict | None:
+        # Optional: return a feature by its unique ID
+        ...
 ```
 
-See [`GeoDataSource`](../api/etter.html#GeoDataSource) for the full protocol definition.
+See [`GeoDataSource`](../api/etter.html#GeoDataSource) for the full protocol definition. The `get_by_id()` method is optional for custom datasources.
