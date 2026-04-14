@@ -24,7 +24,7 @@ postgis = [
 ]
 dev = [
     "langchain-openai>=1.1",
-    "pytest>=9.0",
+    "pytest>=9.0.3",
     "pytest-cov>=7.0",
     "ruff>=0.15",
     "ty>=0.0",
