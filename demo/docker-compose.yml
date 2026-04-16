@@ -56,6 +56,18 @@ services:
         postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgis:5432/${POSTGRES_DB:-geodata}
       SWISSNAMES3D_TABLE: ${SWISSNAMES3D_TABLE:-swissnames3d}
       IGN_BDCARTO_TABLE: ${IGN_BDCARTO_TABLE:-ign_bdcarto}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/')",
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
     depends_on:
       postgis:
         condition: service_healthy
@@ -73,8 +85,15 @@ services:
     environment:
       - PYTHON_API_URL=http://api:8000
       - PORT=3002
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://localhost:3002/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
