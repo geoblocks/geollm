@@ -8,17 +8,34 @@ etter transforms natural language location queries into structured geographic fi
 
 **Key principle:** etter has one responsibility — extract the geographic filter. It does not identify features, filter attributes, or execute searches.
 
-```
-User query: "Hiking with children north of Lausanne"
-                      ↓
-Parent app  →  extracts: Activity="Hiking", Audience="children"
-                      ↓
-etter       →  parses:   relation="north_of", location="Lausanne"
-                      ↓
-Parent app  →  queries:  WHERE activity='hiking' AND ST_Intersects(location, sector)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant App as Parent app
+    participant Etter as etter
+    participant DB as Database
+
+    User->>App: "Hiking with children north of Lausanne"
+
+    %% Parent app internal processing
+    App->>App: extracts: Activity="Hiking", Audience="children"
+
+    %% Forwarding spatial data to etter
+    App->>Etter: Request spatial parsing
+    Etter->>Etter: parses: relation="north_of", location="Lausanne"
+    Etter-->>App: Returns spatial parameters
+
+    %% Final database query
+    App->>DB: queries: WHERE activity='hiking' AND ST_Intersects(location, sector)
 ```
 
 ## Installation
+
+<!-- TODO: Once published to PyPI, update these instructions to use `pip install etter` -->
+
+> [!NOTE]
+> So far etter is not published to PyPI, we will update these instructions once it's available through pip.
 
 ```bash
 git clone https://github.com/geoblocks/etter.git
