@@ -3,13 +3,15 @@
 help:
 	@echo "Setup:"
 	@echo "  make install          	Install dependencies"
-	@echo "  make dev              	Install with dev dependencies"
+	@echo "  make install-dev       	Install with dev dependencies"
+	@echo "  make install-dev-full  	Install with dev and PostGIS dependencies"
 	@echo "  make download-data    	Download SwissNames3D dataset"
 	@echo "  make download-data-ign  	Download IGN BD-CARTO dataset"
 	@echo ""
 	@echo "Running:"
 	@echo "  make repl             	Run interactive REPL"
 	@echo "  make demo             	Run the demo app"
+	@echo "  make demo-composition 	Run the demo app with Docker Compose"
 	@echo ""
 	@echo "Docs:"
 	@echo "  make docs-preview     	Build and preview the documentation site"
@@ -20,8 +22,11 @@ help:
 install:
 	uv sync
 
-dev:
+install-dev:
 	uv sync --extra dev
+
+install-dev-full:
+	uv sync --extra dev --extra postgis
 
 DATA_PKT = data/swissNAMES3D_PLY.shp
 
@@ -36,6 +41,9 @@ repl:
 
 demo:
 	uv run uvicorn demo.main:app --port 8000 --reload
+
+demo-composition:
+	docker compose -f demo/docker-compose.yml up --build -d
 
 download-data: $(DATA_PKT)
 
