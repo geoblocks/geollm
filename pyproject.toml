@@ -33,7 +33,7 @@ dev = [
     "python-dotenv>=1.2",
     "uvicorn>=0.44.0",
     "mcp[cli]>=1.27.0",
-    "rich>=13.0",
+    "rich>=15.0.0",
     # PostGIS integration tests
     "testcontainers[postgres]>=4.14.2",
     "psycopg2-binary>=2.9",
