@@ -23,7 +23,7 @@ postgis = [
     "geoalchemy2>=0.15",
 ]
 dev = [
-    "langchain-openai>=1.1",
+    "langchain-openai>=1.1.14",
     "pytest>=9.0.3",
     "pytest-cov>=7.0",
     "ruff>=0.15",
