@@ -176,7 +176,8 @@ def _build_type_map() -> TypeMap:
             for raw, normalized in raw_map.items():
                 result.setdefault(normalized, []).append(raw)
         elif fixed := cfg.get("fixed_type"):
-            result.setdefault(fixed, []).append(fixed)
+            if fixed not in result.get(fixed, []):
+                result.setdefault(fixed, []).append(fixed)
     return cast(TypeMap, result)
 
 

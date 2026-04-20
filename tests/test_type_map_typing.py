@@ -84,3 +84,15 @@ class TestIgnBdcartoTypeMapKeys:
             assert isinstance(values, list) and len(values) > 0, (
                 f"IGN_BDCARTO_TYPE_MAP[{key!r}] must be a non-empty list, got {values!r}"
             )
+
+    def test_no_duplicate_values(self) -> None:
+        """Regression: shared fixed_type across layers must not produce duplicate raw values.
+
+        _build_type_map() deduplicates fixed_type entries so that types shared by
+        multiple layers (e.g. "arrondissement" used by both "arrondissement" and
+        "arrondissement_municipal") appear only once in the value list.  Without the
+        deduplication guard the SQL IN clause would contain repeated placeholders,
+        producing incorrect query behaviour.
+        """
+        for key, values in IGN_BDCARTO_TYPE_MAP.items():
+            assert len(values) == len(set(values)), f"IGN_BDCARTO_TYPE_MAP[{key!r}] contains duplicate values: {values}"
