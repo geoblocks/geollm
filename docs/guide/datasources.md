@@ -47,6 +47,24 @@ results = source.search("Genève", type="city")
 
 The `type_map` maps **normalized type names** (as used by etter's type system) to lists of **raw values** in the database's type column — the same direction as `SwissNames3DSource`'s `OBJEKTART_TYPE_MAP`.
 
+Use the `TypeMap` type alias when defining your own map to get editor auto-complete and static validation of keys:
+
+```python
+from etter.datasources import PostGISDataSource, TypeMap
+
+my_map: TypeMap = {
+    "municipality": ["COMMUNE"],
+    "river": ["COURS_EAU"],
+}
+source = PostGISDataSource(
+    connection="postgresql+psycopg2://...",
+    table="public.my_geodata",
+    type_map=my_map,
+)
+```
+
+Keys must be valid etter type names (concrete types such as `"lake"` or category names such as `"water"`). An invalid key like `"lac"` is caught by static analysis tools (mypy, pyright) at type-check time rather than silently producing wrong results at runtime.
+
 Install the extra for PostGIS support:
 
 ```bash
@@ -95,6 +113,22 @@ source.search("Morat", type="lake")
 ```
 
 See [`location_types`](../api/etter.html#etter.datasources.location_types) for the complete hierarchy.
+
+### TypeMap
+
+`TypeMap` is a type alias (`dict[LocationTypeName, list[str]]`) that restricts dictionary keys to known etter type names. Use it when defining a `type_map` for `PostGISDataSource` or when building your own datasource map:
+
+```python
+from etter.datasources import TypeMap
+
+# Editors auto-complete the keys; static checkers flag unknown keys.
+my_map: TypeMap = {
+    "lake": ["LAC", "RETENUE"],
+    "river": ["COURS_EAU"],
+}
+```
+
+`LocationTypeName` is the underlying `Literal[...]` type covering all concrete types (e.g. `"lake"`, `"mountain"`) and all category names (e.g. `"water"`, `"landforms"`). Both are importable from `etter.datasources`.
 
 ## Implementing a Custom Datasource
 
