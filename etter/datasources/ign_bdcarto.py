@@ -26,6 +26,7 @@ Expected data layout (produced by scripts/extract_bdcarto.sh):
         parc_ou_reserve.gpkg
 """
 
+import logging
 import unicodedata
 from pathlib import Path
 from typing import Any, cast
@@ -36,6 +37,8 @@ from rapidfuzz import fuzz
 from shapely.geometry import mapping
 
 from .location_types import TypeMap, get_matching_types, merge_segments
+
+logger = logging.getLogger(__name__)
 
 _LAYER_CONFIGS: dict[str, dict[str, Any]] = {
     "commune": {
@@ -178,6 +181,10 @@ def _build_type_map() -> TypeMap:
         elif fixed := cfg.get("fixed_type"):
             if fixed not in result.get(fixed, []):
                 result.setdefault(fixed, []).append(fixed)
+        elif cfg.get("commune_flags"):
+            for t in ("city", "municipality"):
+                if t not in result.get(t, []):
+                    result.setdefault(t, []).append(t)
     return cast(TypeMap, result)
 
 
@@ -438,7 +445,7 @@ class IGNBDCartoSource:
 
         if type is not None:
             matching_types = get_matching_types(type)
-            print(f"Filtering results by type hint '{type}' → matching types: {matching_types}")
+            logger.debug("Filtering results by type hint %r → matching types: %s", type, matching_types)
             if matching_types:
                 features = [f for f in features if f["properties"].get("type") in matching_types]
             else:
