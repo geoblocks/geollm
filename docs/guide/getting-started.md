@@ -116,3 +116,20 @@ parser = GeoFilterParser(llm=llm, spatial_config=config)
 ```
 
 See [Spatial Relations](/guide/spatial-relations) for the full list of built-ins and configuration options.
+
+## Additional Instructions
+
+Pass `additional_instructions` to inject caller-specific rules into the prompt without forking the default system prompt. The text is added as a system message after the main prompt and before the few-shot examples.
+
+Typical uses: region-specific endonyms, domain aliases, or organization-specific place names.
+
+```python
+parser = GeoFilterParser(
+    llm=llm,
+    additional_instructions=(
+        "This application serves Swiss users. "
+        "'Lac Léman' and 'Lake Geneva' both refer to the same body of water. "
+        "Prefer the French endonym when the query is in French."
+    ),
+)
+```

@@ -48,6 +48,7 @@ class GeoFilterParser:
         strict_mode: bool = False,
         include_examples: bool = True,
         datasource: GeoDataSource | None = None,
+        additional_instructions: str | None = None,
     ):
         """
         Initialize the parser.
@@ -60,6 +61,10 @@ class GeoFilterParser:
             include_examples: Whether to include few-shot examples in prompt
             datasource: Optional GeoDataSource instance. If provided, the LLM will be informed
                        about the concrete types available in that datasource for better type inference.
+            additional_instructions: Free-form text injected as a system message after the main
+                       system prompt and before few-shot examples. Use this to add caller-specific
+                       rules such as region-specific endonyms, domain aliases, or
+                       organization-specific place names without forking the default prompt.
 
         Example:
             >>> from langchain.chat_models import init_chat_model
@@ -78,6 +83,7 @@ class GeoFilterParser:
         self.strict_mode = strict_mode
         self.include_examples = include_examples
         self.datasource = datasource
+        self.additional_instructions = additional_instructions
 
         # Build structured LLM
         self.structured_llm = self._build_structured_llm()
@@ -104,6 +110,7 @@ class GeoFilterParser:
             spatial_config=self.spatial_config,
             include_examples=self.include_examples,
             available_types=available_types,
+            additional_instructions=self.additional_instructions,
         )
 
     def parse(self, query: str) -> GeoQuery:

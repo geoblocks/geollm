@@ -172,6 +172,7 @@ def build_prompt_template(
     spatial_config: SpatialRelationConfig,
     include_examples: bool = True,
     available_types: list[str] | None = None,
+    additional_instructions: str | None = None,
 ) -> ChatPromptTemplate:
     """
     Build complete prompt template with system message, examples, and user message.
@@ -181,6 +182,9 @@ def build_prompt_template(
         include_examples: Whether to include few-shot examples (default: True)
         available_types: Concrete types available in the datasource (e.g., ["lake", "river", "city"]).
                         If provided, will be included in the prompt to help the LLM choose appropriate types.
+        additional_instructions: Free-form text injected as a system message after the main system prompt. Use this to inject
+                                 caller-specific rules (region-specific endonyms, domain aliases,
+                                 organization-specific place names) without forking the default prompt.
 
     Returns:
         ChatPromptTemplate ready for formatting
@@ -206,6 +210,10 @@ When inferring type, prefer these concrete types for better matching."""
     # Escape braces for ChatPromptTemplate
     system_prompt = system_prompt.replace("{", "{{").replace("}", "}}")
     messages.append(("system", system_prompt))
+
+    if additional_instructions:
+        escaped = additional_instructions.replace("{", "{{").replace("}", "}}")
+        messages.append(("system", escaped))
 
     # Few-shot examples (optional but recommended)
     if include_examples:

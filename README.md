@@ -179,6 +179,14 @@ Main class for parsing queries.
 - `get_available_relations(category: Optional[str]) -> List[str]`: List available relations
 - `describe_relation(name: str) -> str`: Get relation description
 
+**Constructor options (selected):**
+
+- `confidence_threshold`: Minimum confidence to accept (0–1, default `0.6`)
+- `strict_mode`: Raise `LowConfidenceError` instead of warning (default `False`)
+- `include_examples`: Include few-shot examples in the prompt (default `True`)
+- `datasource`: `GeoDataSource` instance — informs the LLM of available concrete types
+- `additional_instructions`: Free-form text injected as a system message after the main prompt and before few-shot examples. Use for region-specific endonyms, domain aliases, or organization-specific place names.
+
 ### GeoQuery
 
 Structured output model representing the parsed geographic filter.
