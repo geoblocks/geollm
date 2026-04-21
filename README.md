@@ -49,13 +49,23 @@ Parent application handles feature/activity filtering and combines it with etter
 
 ## Installation
 
+```bash
+pip install etter
+```
+
+With PostGIS datasource support:
+
+```bash
+pip install etter[postgis]
+```
+
+### Development setup
+
 This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
 
 ```bash
-# Install dependencies
-uv sync
-
-# Or with development dependencies
+git clone https://github.com/geoblocks/etter.git
+cd etter
 uv sync --extra dev
 ```
 
@@ -256,3 +266,17 @@ uv run ruff check
 # Type checking
 uv run ty check
 ```
+
+### Releases
+
+Releases are automated via [Release Please](https://github.com/googleapis/release-please). The version and changelog are determined by PR titles using the [Conventional Commits](https://www.conventionalcommits.org/) format:
+
+| PR title prefix | Version bump |
+|---|---|
+| `feat: ...` | minor (`0.x.0`) |
+| `fix: ...`, `perf: ...` | patch (`0.0.x`) |
+| `feat!: ...` or `BREAKING CHANGE` | major (`x.0.0`) |
+
+All other prefixes (`chore:`, `docs:`, `refactor:`, `test:`, `ci:`) do not trigger a release.
+
+When a releasable commit lands on `main`, Release Please opens a release PR. Merging it tags the commit and triggers the PyPI publish workflow.
