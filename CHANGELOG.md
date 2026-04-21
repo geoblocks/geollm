@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/geoblocks/etter/compare/v0.1.0...v0.1.1) (2026-04-21)
+
+
+### Bug Fixes
+
+* update package docstring ([8069885](https://github.com/geoblocks/etter/commit/8069885d9a97e486638f098353153e0c4ac2b328))
+
 ## 0.1.0 (2026-04-21)
 
 
