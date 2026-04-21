@@ -32,21 +32,14 @@ sequenceDiagram
 
 ## Installation
 
-<!-- TODO: Once published to PyPI, update these instructions to use `pip install etter` -->
-
-> [!NOTE]
-> So far etter is not published to PyPI, we will update these instructions once it's available through pip.
-
 ```bash
-git clone https://github.com/geoblocks/etter.git
-cd etter
-uv sync --extra dev
+pip install etter
 ```
 
 With PostGIS datasource support:
 
 ```bash
-uv sync --extra postgis
+pip install etter[postgis]
 ```
 
 ## Quick Start
