@@ -1,4 +1,4 @@
-![etter logo](./images/etter-logo.png)
+![etter logo](https://raw.githubusercontent.com/geoblocks/etter/main/images/etter-logo.png)
 
 > **[etter](https://en.wiktionary.org/wiki/Etter#German)** /ˈɛtɐ/ *n.* (Swiss German) — the boundary or enclosure marking the edge of a village or commune; a natural demarcation between settled and unsettled land.
 
@@ -16,7 +16,7 @@ It uses Large Language Models (LLMs) to understand multilingual queries and extr
 
 ## Sponsorship
 
-[![camptocamp logo](./images/camptocamp-logo.png)](https://www.camptocamp.com)
+[![camptocamp logo](https://raw.githubusercontent.com/geoblocks/etter/main/images/camptocamp-logo.png)](https://www.camptocamp.com)
 
 The development of this library is sponsored by [Camptocamp](https://www.camptocamp.com).
 
