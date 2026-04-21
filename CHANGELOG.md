@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/geoblocks/etter/compare/v0.1.1...v0.1.2) (2026-04-21)
+
+
+### Bug Fixes
+
+* reorganize project metadata in pyproject.toml ([#81](https://github.com/geoblocks/etter/issues/81)) ([16244b2](https://github.com/geoblocks/etter/commit/16244b2b2d13055705af80d94637972223a3fd97))
+
 ## [0.1.1](https://github.com/geoblocks/etter/compare/v0.1.0...v0.1.1) (2026-04-21)
 
 
