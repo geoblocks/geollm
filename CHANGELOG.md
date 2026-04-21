@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/geoblocks/etter/compare/v0.1.2...v0.1.3) (2026-04-21)
+
+
+### Documentation
+
+* update installation instructions now that etter is on PyPI ([#83](https://github.com/geoblocks/etter/issues/83)) ([36ac9f8](https://github.com/geoblocks/etter/commit/36ac9f8e5bb961c0b205519792ec6909eac87efd))
+
 ## [0.1.2](https://github.com/geoblocks/etter/compare/v0.1.1...v0.1.2) (2026-04-21)
 
 
