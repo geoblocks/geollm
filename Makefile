@@ -1,4 +1,4 @@
-.PHONY: help install test lint format clean repl demo docs-preview
+.PHONY: help install test lint format clean repl demo docs-preview smoke-test
 
 help:
 	@echo "Setup:"
@@ -15,6 +15,8 @@ help:
 	@echo ""
 	@echo "Docs:"
 	@echo "  make docs-preview     	Build and preview the documentation site"
+	@echo ""
+	@echo "  make smoke-test       	Build dist and run smoke checks against wheel and sdist"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  make clean            	Clean build artifacts"
@@ -67,6 +69,11 @@ docs-preview:
 	npm --prefix docs run preview
 
 clean:
-	rm -rf .pytest_cache htmlcov .coverage
+	rm -rf .pytest_cache htmlcov .coverage dist build
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
+
+smoke-test:
+	uv build
+	uv run -n --isolated --no-project --with dist/*.whl python tests/smoke_check.py
+	uv run -n --isolated --no-project --with dist/*.tar.gz python tests/smoke_check.py
