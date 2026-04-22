@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.0](https://github.com/geoblocks/etter/compare/v0.1.3...v0.2.0) (2026-04-22)
+
+
+### Features
+
+* add additional_instructions parameter to GeoFilterParser ([#87](https://github.com/geoblocks/etter/issues/87)) ([5a8c872](https://github.com/geoblocks/etter/commit/5a8c87220302ffac300a00658c368bf219c9371a))
+* add async aparse method to GeoFilterParser ([c1c71f2](https://github.com/geoblocks/etter/commit/c1c71f20a9b855d66137b1bdb68e612aba1ba834))
+* add async aparse method to GeoFilterParser ([#86](https://github.com/geoblocks/etter/issues/86)) ([008890b](https://github.com/geoblocks/etter/commit/008890b145c00a45278ddb896fd6b13b1649c78e))
+* introduce LocationTypeName and TypeMap ([#78](https://github.com/geoblocks/etter/issues/78)) ([8bb8adf](https://github.com/geoblocks/etter/commit/8bb8adfbeedf14b62ed3813f08c0b3c11ac24703))
+
 ## [0.1.3](https://github.com/geoblocks/etter/compare/v0.1.2...v0.1.3) (2026-04-21)
 
 
