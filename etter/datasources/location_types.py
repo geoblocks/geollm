@@ -13,7 +13,7 @@ of type "lake", "river", "pond", etc.
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any
+from typing import Any, Literal
 
 from shapely.geometry import mapping, shape
 from shapely.ops import unary_union
@@ -148,6 +148,127 @@ ALL_TYPES: list[str] = sorted(set(TYPE_TO_CATEGORY.keys()))
 
 # All categories
 ALL_CATEGORIES: list[str] = sorted(TYPE_HIERARCHY.keys())
+
+# ---------------------------------------------------------------------------
+# Typed aliases for type maps
+# ---------------------------------------------------------------------------
+
+# A union of every valid etter type name (concrete types + category names).
+# Using a Literal gives editors auto-complete and lets static analysis tools
+# (mypy, pyright) flag unknown keys in type_map dictionaries at type-check
+# time rather than silently producing incorrect runtime behaviour.
+LocationTypeName = Literal[
+    # concrete types
+    "alpine_pasture",
+    "airport",
+    "area",
+    "arrondissement",
+    "border_marker",
+    "boulder",
+    "bridge",
+    "building",
+    "bus_stop",
+    "boat_stop",
+    "camping",
+    "canton",
+    "cave",
+    "cemetery",
+    "city",
+    "correctional_facility",
+    "country",
+    "customs",
+    "dam",
+    "department",
+    "district",
+    "ditch",
+    "entrance_exit",
+    "exit",
+    "fairground",
+    "ferry",
+    "field_name",
+    "forest",
+    "fountain",
+    "glacier",
+    "hamlet",
+    "heliport",
+    "hill",
+    "historical_site",
+    "hospital",
+    "island",
+    "junction",
+    "lake",
+    "leisure_facility",
+    "landfill",
+    "lift",
+    "loading_station",
+    "local_name",
+    "massif",
+    "military_training_area",
+    "monastery",
+    "monument",
+    "mountain",
+    "municipality",
+    "nature_reserve",
+    "park",
+    "parking",
+    "pass",
+    "peak",
+    "peninsula",
+    "plain",
+    "pond",
+    "power_plant",
+    "private_driving_area",
+    "quarry",
+    "railway",
+    "railway_area",
+    "region",
+    "religious_building",
+    "rest_area",
+    "restaurant",
+    "ridge",
+    "river",
+    "road",
+    "rock_head",
+    "school",
+    "spring",
+    "sports_facility",
+    "standing_area",
+    "swimming_pool",
+    "town",
+    "tower",
+    "train_station",
+    "tunnel",
+    "unknown",
+    "valley",
+    "viewpoint",
+    "village",
+    "wastewater_treatment",
+    "waste_incineration",
+    "waterfall",
+    "weir",
+    "zoo",
+    # category names
+    "administrative",
+    "amenity",
+    "building",
+    "infrastructure",
+    "island",
+    "landforms",
+    "mountain",
+    "natural",
+    "other",
+    "settlement",
+    "transport",
+    "water",
+]
+
+# Mapping from a valid etter type name to a list of raw datasource values.
+# Use this type when defining a ``type_map`` for :class:`PostGISDataSource`
+# or the built-in datasource maps (``OBJEKTART_TYPE_MAP``,
+# ``IGN_BDCARTO_TYPE_MAP``).  The keys are restricted to known etter type
+# names so that editors can provide auto-complete and static analysis tools
+# can catch typos (e.g. ``"lac"`` instead of ``"lake"``) at type-check time.
+TypeMap = dict[LocationTypeName, list[str]]
 
 
 def normalize_type(type_hint: str | None) -> str | None:

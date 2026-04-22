@@ -26,86 +26,19 @@ Expected data layout (produced by scripts/extract_bdcarto.sh):
         parc_ou_reserve.gpkg
 """
 
+import logging
 import unicodedata
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import geopandas as gpd
 import pandas as pd
 from rapidfuzz import fuzz
 from shapely.geometry import mapping
 
-from .location_types import get_matching_types, merge_segments
+from .location_types import TypeMap, get_matching_types, merge_segments
 
-_PLAN_D_EAU_TYPES: dict[str, str] = {
-    "Lac": "lake",
-    "Lagune": "lake",
-    "Retenue": "lake",
-    "Retenue-barrage": "lake",
-    "Retenue-digue": "lake",
-    "Retenue-bassin portuaire": "lake",
-    "Estuaire": "river",
-    "Canal": "river",
-    "Ecoulement canalisé": "river",
-    "Ecoulement naturel": "river",
-    "Glacier, névé": "glacier",
-    "Mare": "pond",
-    "Marais": "pond",
-    "Plan d'eau de gravière": "pond",
-    "Plan d'eau de mine": "pond",
-    "Réservoir-bassin": "pond",
-    "Réservoir-bassin d'orage": "pond",
-    "Réservoir-bassin piscicole": "pond",
-}
-
-_DETAIL_OROGRAPHIQUE_TYPES: dict[str, str] = {
-    "Sommet": "peak",
-    "Pic": "peak",
-    "Volcan": "peak",
-    "Montagne": "mountain",
-    "Col": "pass",
-    "Crête": "ridge",
-    "Cap": "peninsula",
-    "Vallée": "valley",
-    "Gorge": "valley",
-    "Cirque": "valley",
-    "Dépression": "valley",
-    "Plaine": "plain",
-    "Ile": "island",
-    "Grotte": "cave",
-    "Gouffre": "cave",
-    "Rochers": "rock_head",
-    "Dune": "local_name",
-    "Escarpement": "local_name",
-    "Isthme": "local_name",
-    "Plage": "local_name",
-    "Récif": "local_name",
-    "Terril": "local_name",
-    "Versant": "local_name",
-}
-
-_PARC_TYPES: dict[str, str] = {
-    "Parc national": "park",
-    "Parc naturel marin": "park",
-    "Parc naturel régional": "park",
-    "Réserve nationale de chasse et de faune sauvage": "nature_reserve",
-    "Réserve naturelle": "nature_reserve",
-}
-
-_ZONE_HABITATION_TYPES: dict[str, str] = {
-    "Quartier": "district",
-    "Lieu-dit habité": "hamlet",
-    "Château": "local_name",
-    "Grange": "local_name",
-    "Moulin": "local_name",
-    "Ruines": "local_name",
-}
-
-_LIEU_DIT_TYPES: dict[str, str] = {
-    "Bois": "forest",
-    "Arbre": "local_name",
-    "Lieu-dit non habité": "local_name",
-}
+logger = logging.getLogger(__name__)
 
 _LAYER_CONFIGS: dict[str, dict[str, Any]] = {
     "commune": {
@@ -147,27 +80,87 @@ _LAYER_CONFIGS: dict[str, dict[str, Any]] = {
     "plan_d_eau": {
         "name_col": "toponyme",
         "type_col": "nature",
-        "type_map": _PLAN_D_EAU_TYPES,
+        "type_map": {
+            "Lac": "lake",
+            "Lagune": "lake",
+            "Retenue": "lake",
+            "Retenue-barrage": "lake",
+            "Retenue-digue": "lake",
+            "Retenue-bassin portuaire": "lake",
+            "Estuaire": "river",
+            "Canal": "river",
+            "Ecoulement canalisé": "river",
+            "Ecoulement naturel": "river",
+            "Glacier, névé": "glacier",
+            "Mare": "pond",
+            "Marais": "pond",
+            "Plan d'eau de gravière": "pond",
+            "Plan d'eau de mine": "pond",
+            "Réservoir-bassin": "pond",
+            "Réservoir-bassin d'orage": "pond",
+            "Réservoir-bassin piscicole": "pond",
+        },
     },
     "zone_d_habitation": {
         "name_col": "toponyme",
         "type_col": "nature",
-        "type_map": _ZONE_HABITATION_TYPES,
+        "type_map": {
+            "Quartier": "district",
+            "Lieu-dit habité": "hamlet",
+            "Château": "local_name",
+            "Grange": "local_name",
+            "Moulin": "local_name",
+            "Ruines": "local_name",
+        },
     },
     "lieu_dit_non_habite": {
         "name_col": "toponyme",
         "type_col": "nature",
-        "type_map": _LIEU_DIT_TYPES,
+        "type_map": {
+            "Bois": "forest",
+            "Arbre": "local_name",
+            "Lieu-dit non habité": "local_name",
+        },
     },
     "detail_orographique": {
         "name_col": "toponyme",
         "type_col": "nature",
-        "type_map": _DETAIL_OROGRAPHIQUE_TYPES,
+        "type_map": {
+            "Sommet": "peak",
+            "Pic": "peak",
+            "Volcan": "peak",
+            "Montagne": "mountain",
+            "Col": "pass",
+            "Crête": "ridge",
+            "Cap": "peninsula",
+            "Vallée": "valley",
+            "Gorge": "valley",
+            "Cirque": "valley",
+            "Dépression": "valley",
+            "Plaine": "plain",
+            "Ile": "island",
+            "Grotte": "cave",
+            "Gouffre": "cave",
+            "Rochers": "rock_head",
+            "Dune": "local_name",
+            "Escarpement": "local_name",
+            "Isthme": "local_name",
+            "Plage": "local_name",
+            "Récif": "local_name",
+            "Terril": "local_name",
+            "Versant": "local_name",
+        },
     },
     "parc_ou_reserve": {
         "name_col": "toponyme",
         "type_col": "nature",
-        "type_map": _PARC_TYPES,
+        "type_map": {
+            "Parc national": "park",
+            "Parc naturel marin": "park",
+            "Parc naturel régional": "park",
+            "Réserve nationale de chasse et de faune sauvage": "nature_reserve",
+            "Réserve naturelle": "nature_reserve",
+        },
     },
 }
 
@@ -175,26 +168,27 @@ _TYPE_COL = "_normalized_type"
 _NAME_COL = "_name"
 
 
-# Public type map
-def _build_ign_type_map() -> dict[str, list[str]]:
+# Public type map — derived from _LAYER_CONFIGS, which is the single source of truth.
+# Keys are normalized etter type names; values are the raw source values that map to them.
+# cast is safe: all fixed_type and type_map values in _LAYER_CONFIGS are known etter type
+# names, asserted exhaustively by the test suite.
+def _build_type_map() -> TypeMap:
     result: dict[str, list[str]] = {}
     for cfg in _LAYER_CONFIGS.values():
-        raw_map: dict[str, str] | None = cfg.get("type_map")
-        if raw_map:
-            # Layers with a type_map store raw source values in the DB (e.g. "Estuaire",
-            # "Canal").  Map normalized → list of raw values for query-time translation.
-            for raw_value, normalized in raw_map.items():
-                result.setdefault(normalized, []).append(raw_value)
+        if raw_map := cfg.get("type_map"):
+            for raw, normalized in raw_map.items():
+                result.setdefault(normalized, []).append(raw)
         elif fixed := cfg.get("fixed_type"):
-            # Layers with a fixed_type store the normalized value directly in the DB
-            # (e.g. "river" for cours_d_eau).  The DB value IS the normalized type, so
-            # add an identity mapping so the query filter matches it.
             if fixed not in result.get(fixed, []):
                 result.setdefault(fixed, []).append(fixed)
-    return result
+        elif cfg.get("commune_flags"):
+            for t in ("city", "municipality"):
+                if t not in result.get(t, []):
+                    result.setdefault(t, []).append(t)
+    return cast(TypeMap, result)
 
 
-IGN_BDCARTO_TYPE_MAP: dict[str, list[str]] = _build_ign_type_map()
+IGN_BDCARTO_TYPE_MAP: TypeMap = _build_type_map()
 
 
 def _normalize_name(name: str) -> str:
@@ -451,7 +445,7 @@ class IGNBDCartoSource:
 
         if type is not None:
             matching_types = get_matching_types(type)
-            print(f"Filtering results by type hint '{type}' → matching types: {matching_types}")
+            logger.debug("Filtering results by type hint %r → matching types: %s", type, matching_types)
             if matching_types:
                 features = [f for f in features if f["properties"].get("type") in matching_types]
             else:

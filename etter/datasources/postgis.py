@@ -29,7 +29,7 @@ import logging
 import unicodedata
 from typing import TYPE_CHECKING, Any
 
-from .location_types import get_matching_types, merge_segments
+from .location_types import TypeMap, get_matching_types, merge_segments
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +144,7 @@ class PostGISDataSource:
         geometry_column: str = "geom",
         id_column: str = "id",
         crs: str = "EPSG:4326",
-        type_map: dict[str, list[str]] | None = None,
+        type_map: TypeMap | None = None,
         fuzzy_threshold: float = 0.65,
     ) -> None:
         sa = _require_sqlalchemy()
@@ -170,7 +170,7 @@ class PostGISDataSource:
 
         # Build bidirectional lookup structures from the user-supplied map.
         if type_map:
-            self._normalized_to_raw: dict[str, list[str]] = dict(type_map)
+            self._normalized_to_raw: dict[str, list[str]] = {k: list(v) for k, v in type_map.items()}
             self._raw_to_normalized: dict[str, str] = {
                 raw: normalized for normalized, raws in type_map.items() for raw in raws
             }

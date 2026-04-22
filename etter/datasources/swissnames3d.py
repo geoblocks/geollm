@@ -18,7 +18,7 @@ from shapely import force_2d
 from shapely.geometry import mapping
 from shapely.ops import transform as shapely_transform
 
-from .location_types import get_matching_types
+from .location_types import TypeMap, get_matching_types
 
 # CH1903+ (LV95) to WGS84 transformer - data is assumed to always be in EPSG:2056
 _TRANSFORMER = pyproj.Transformer.from_crs("EPSG:2056", "EPSG:4326", always_xy=True)
@@ -26,7 +26,7 @@ _TRANSFORMER = pyproj.Transformer.from_crs("EPSG:2056", "EPSG:4326", always_xy=T
 # Map normalized, grouped types to their OBJEKTART values.
 # Each type groups related OBJEKTART values (e.g., lake groups: See, Seeteil, Stausee).
 # This reduces cardinality while preserving semantic meaning and traceability.
-OBJEKTART_TYPE_MAP: dict[str, list[str]] = {
+OBJEKTART_TYPE_MAP: TypeMap = {
     # Water bodies
     "lake": ["See", "Seeteil", "Stausee"],
     "island": ["Seeinsel", "Insel"],
