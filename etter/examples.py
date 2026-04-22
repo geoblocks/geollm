@@ -131,29 +131,6 @@ EXAMPLES: list[ExampleQuery] = [
             original_query="hiking north of Bern",
         ),
     ),
-    # Spatial ambiguity - ring_only (English)
-    ExampleQuery(
-        input="on the lake shore",
-        language="en",
-        description="Spatial ambiguity - 'on' shores means excluding the water, using ring_only=true",
-        output=GeoQuery(
-            query_type="simple",
-            spatial_relation=SpatialRelation(relation="on_shores_of", category="buffer", explicit_distance=None),
-            reference_location=ReferenceLocation(
-                name="lake",
-                type="lake",
-                type_confidence=0.80,
-            ),
-            buffer_config=BufferConfig(distance_m=0, buffer_from="boundary", ring_only=True, inferred=False),
-            confidence_breakdown=ConfidenceScore(
-                overall=0.85,
-                location_confidence=0.80,
-                relation_confidence=0.90,
-                reasoning="'On the shore' indicates boundary/ring_only context",
-            ),
-            original_query="on the lake shore",
-        ),
-    ),
     # Time-based distance - walking (English)
     ExampleQuery(
         input="30 minutes walking from the station",
@@ -260,13 +237,10 @@ def format_examples_for_prompt() -> str:
     """
     examples_text = []
 
-    for i, ex in enumerate(EXAMPLES, 1):
-        examples_text.append(f"Example {i} ({ex.language}): {ex.description}")
-        examples_text.append(f"Input: {ex.input}")
-        examples_text.append("Output:")
-        # Use model_dump with JSON serialization for clean output, exclude None values
-        examples_text.append(ex.output.model_dump_json(indent=2, exclude_none=True))
-        examples_text.append("")  # Blank line between examples
+    for ex in EXAMPLES:
+        examples_text.append(f"Q: {ex.input}")
+        examples_text.append(f"A: {ex.output.model_dump_json(exclude_none=True, exclude={'original_query'})}")
+        examples_text.append("")
 
     return "\n".join(examples_text)
 
