@@ -50,7 +50,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      LLM_API_KEY: ${LLM_API_KEY}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o}
       # PostGIS mode: set ETTER_DB_URL to use PostGISDataSource
       ETTER_DB_URL: >-
         postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgis:5432/${POSTGRES_DB:-geodata}

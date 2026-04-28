@@ -69,68 +69,47 @@ cd etter
 uv sync --extra dev
 ```
 
-## REPL
+## Demos
+
+For all the demos, set a valid model name and API key in `.env` file:
+
+```bash
+cat <<EOF > .env
+LLM_API_KEY="sk-..."
+LLM_MODEL="gpt-4o"
+EOF
+```
+
+### REPL
 
 An interactive REPL is available for testing queries interactively:
 
-Set your OpenAI API key before running:
-
 ```bash
-export OPENAI_API_KEY='sk-...'
 uv run python repl.py
 ```
 
-## Demo API Server
+### Demo API Server
 
 A FastAPI demo server is available that combines query parsing with geographic resolution using SwissNames3D data.
-
-**Setup:**
-
-Set `OPENAI_API_KEY` in your `.env` file:
-
-```bash
-echo "OPENAI_API_KEY=sk-..." > .env
-```
-
-**Running the server:**
 
 ```bash
 uv run uvicorn demo.main:app --port 8000 --reload
 ```
 
-The API will be available at `http://localhost:8000`.
-
-**Making a query:**
-
-```bash
-# Standard endpoint (returns complete result)
-curl -X POST http://localhost:8000/api/query \
-  -H "Content-Type: application/json" \
-  -d '{"query": "north of Lausanne"}'
-
-# Streaming endpoint (returns Server-Sent Events)
-curl -X POST http://localhost:8000/api/query/stream \
-  -H "Content-Type: application/json" \
-  -d '{"query": "north of Lausanne"}' \
-  --no-buffer
-```
-
-Response: A GeoJSON FeatureCollection containing the parsed geographic query, spatial relation, and computed search areas.
-
-The web UI at `http://localhost:8000` includes a toggle to enable streaming mode with real-time reasoning display.
+The API will be available at [http://localhost:8000](http://localhost:8000).
 
 ## Quick Start
 
 ```python
-from langchain_openai import ChatOpenAI
+from langchain.chat_models import init_chat_model
 from etter import GeoFilterParser
 import os
 
 # Initialize LLM
-llm = ChatOpenAI(
-    model="gpt-4o",
+llm = init_chat_model(
+    model=os.getenv("LLM_MODEL", "gpt-4o"),
     temperature=0,
-    api_key=os.getenv("OPENAI_API_KEY")
+    api_key=os.getenv("LLM_API_KEY")
 )
 
 # Initialize parser

@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from langchain_openai import ChatOpenAI
+from langchain.chat_models import init_chat_model
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.exceptions import ToolError
 from pydantic import BaseModel
@@ -101,7 +101,14 @@ else:
 
 datasource = CompositeDataSource(*sources)
 
-llm = ChatOpenAI(model="gpt-4o", temperature=0)
+# Initialize etter components
+LLM_API_KEY = os.getenv("LLM_API_KEY")
+if not LLM_API_KEY:
+    raise RuntimeError("LLM_API_KEY not set. Please set it in your .env file.")
+LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o")
+if not LLM_MODEL:
+    raise RuntimeError("LLM_MODEL not set. Please set it in your .env file.")
+llm = init_chat_model(model=LLM_MODEL, temperature=0, api_key=LLM_API_KEY)
 parser = GeoFilterParser(llm, datasource=datasource)
 
 

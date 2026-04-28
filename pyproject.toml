@@ -53,6 +53,7 @@ dev = [
     "uvicorn>=0.44.0",
     "mcp[cli]>=1.27.0",
     "rich>=15.0.0",
+    "trio>=0.28",
     # PostGIS integration tests
     "testcontainers[postgres]>=4.14.2",
     "psycopg2-binary>=2.9",

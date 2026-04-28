@@ -385,8 +385,9 @@ load time.
 make download-data          # SwissNames3D shapefiles → data/
 make download-data-ign      # IGN BD-CARTO gpkg files → data/bdcarto/
 
-# 2. Set your OpenAI API key
-export OPENAI_API_KEY=sk-...
+# 2. Set your API key and model
+export LLM_API_KEY=sk-...
+export LLM_MODEL=gpt-4o
 
 # 3. Start the full stack
 docker compose -f demo/docker-compose.yml up
