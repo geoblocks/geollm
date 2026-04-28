@@ -36,7 +36,7 @@ MCP Host (VS Code / Claude Desktop)
 
 **demo/main.py**
 
-- Loads the `etter` package, SwissNames3D data, and a LangChain `ChatOpenAI` instance.
+- Loads the `etter` package, SwissNames3D data, and a LangChain `init_chat_model` instance.
 - Exposes `POST /api/query` (consumed by the TS proxy) and `POST /api/query/stream` (SSE streaming variant).
 - Mounts a native MCP endpoint at `/mcp` via FastMCP — useful when the map panel is not needed and you want to avoid the Node dependency entirely.
 - Returns a `QueryResponse` containing the parsed `GeoQuery` and a GeoJSON `FeatureCollection`.
@@ -63,7 +63,8 @@ npm install
 npm run build          # produces dist/mcp-app.html
 
 # 4. Start the Python backend (from repo root)
-OPENAI_API_KEY=sk-... uv run uvicorn demo.main:app --reload
+# make sure the .env file is set up with your LLM_API_KEY and LLM_MODEL
+uv run uvicorn demo.main:app --port 8000 --reload
 
 # 5. Start the TypeScript MCP proxy
 cd demo/etter-mcp-app
@@ -101,8 +102,8 @@ To use the native MCP endpoint directly (no map UI, no Node dependency):
 Build context must be the **repo root** (the Dockerfile copies `etter/` and `pyproject.toml`).
 
 ```bash
-cd demo/etter-mcp-app
-cp .env.example .env   # set OPENAI_API_KEY
+cd demo
+cp .env.example .env   # fill in LLM_API_KEY and POSTGRES_* values
 docker compose up --build
 ```
 
@@ -117,7 +118,8 @@ The SwissNames3D data directory (`../../data` relative to `docker-compose.yml`) 
 
 | Variable            | Default                 | Description                                     |
 | ------------------- | ----------------------- | ----------------------------------------------- |
-| `OPENAI_API_KEY`    | -                       | Required. Passed to LangChain.                  |
+| `LLM_API_KEY`       | -                       | Required. Passed to LangChain.                  |
+| `LLM_MODEL`         | -                       | The model to use with LangChain.                |
 | `SWISSNAMES3D_PATH` | `data`                  | Path to the SwissNames3D shapefiles.            |
 | `PORT`              | `3002`                  | Port for the Node (TS) server.                  |
 | `PYTHON_API_URL`    | `http://127.0.0.1:8000` | URL of the Python backend, read by `server.ts`. |

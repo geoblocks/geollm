@@ -79,19 +79,21 @@ def main():
     """Run the interactive REPL."""
     load_dotenv()
 
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        console.print("[bold red]Error:[/bold red] OPENAI_API_KEY environment variable not set")
-        console.print("  Set it with: [dim]export OPENAI_API_KEY='sk-...'[/dim]")
+    LLM_API_KEY = os.getenv("LLM_API_KEY")
+    if not LLM_API_KEY:
+        console.print("[bold red]Error:[/bold red] LLM_API_KEY environment variable not set")
+        return
+    LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o")
+    if not LLM_MODEL:
+        console.print("[bold red]Error:[/bold red] LLM_MODEL environment variable not set")
         return
 
     with console.status("[bold blue]Initializing etter...[/bold blue]"):
         try:
             llm = init_chat_model(
-                model="gpt-4o",
-                model_provider="openai",
+                model=LLM_MODEL,
                 temperature=0,
-                api_key=api_key,
+                api_key=LLM_API_KEY,
             )
         except Exception as e:
             console.print(f"[bold red]Failed to initialize LLM:[/bold red] {e}")
