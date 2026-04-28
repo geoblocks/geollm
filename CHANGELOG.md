@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/geoblocks/etter/compare/v0.2.1...v0.3.0) (2026-04-28)
+
+
+### Features
+
+* store llm model as env var ([#16](https://github.com/geoblocks/etter/issues/16)) ([1dc9d05](https://github.com/geoblocks/etter/commit/1dc9d05888a65d884f1f05867507be4d8aa07f3f))
+
 ## [0.2.1](https://github.com/geoblocks/etter/compare/v0.2.0...v0.2.1) (2026-04-23)
 
 
