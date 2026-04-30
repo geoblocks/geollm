@@ -59,6 +59,37 @@ config.register_relation(RelationConfig(
 
 See [`SpatialRelationConfig`](../api/etter.html#SpatialRelationConfig) and [`RelationConfig`](../api/etter.html#RelationConfig) for all available options.
 
+## Output Geometry Format
+
+By default `apply_spatial_relation()` returns a GeoJSON geometry dict. Use the `geometry_format` parameter to request WKT or WKB instead:
+
+```python
+from etter import apply_spatial_relation
+from etter.models import SpatialRelation, BufferConfig
+
+geometry = datasource.search("Lausanne")[0]["geometry"]
+
+# GeoJSON dict (default)
+result = apply_spatial_relation(geometry, relation, buffer_config)
+
+# WKT string
+result_wkt = apply_spatial_relation(geometry, relation, buffer_config, geometry_format="wkt")
+
+# WKB hex string
+result_wkb = apply_spatial_relation(geometry, relation, buffer_config, geometry_format="wkb")
+```
+
+To convert raw datasource feature dicts, use `convert_feature_geometry()`:
+
+```python
+from etter import convert_feature_geometry
+
+feature = datasource.search("Lausanne")[0]
+feature_wkt = convert_feature_geometry(feature, "wkt")
+# feature_wkt["geometry"] is now a WKT string
+```
+
+
 ## Querying Available Relations
 
 ```python

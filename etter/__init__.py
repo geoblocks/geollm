@@ -23,12 +23,14 @@ from .exceptions import (
     UnknownRelationError,
     ValidationError,
 )
+from .geometry_format import convert_feature_geometry, convert_geometry
 
 # Models (for type hints and result access)
 from .models import (
     BufferConfig,
     ConfidenceLevel,
     ConfidenceScore,
+    GeometryFormat,
     GeoQuery,
     ReferenceLocation,
     SpatialRelation,
@@ -51,6 +53,7 @@ __all__ = [
     "BufferConfig",
     "ConfidenceScore",
     "ConfidenceLevel",
+    "GeometryFormat",
     # Configuration
     "SpatialRelationConfig",
     "RelationConfig",
@@ -69,4 +72,6 @@ __all__ = [
     "PostGISDataSource",
     # Spatial
     "apply_spatial_relation",
+    "convert_geometry",
+    "convert_feature_geometry",
 ]

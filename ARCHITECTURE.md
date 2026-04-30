@@ -136,12 +136,12 @@ Resolves location names to geometries.
 
 Transforms reference geometries into search areas.
 
-- **Function**: `apply_spatial_relation(geometry, relation, buffer_config)`
+- **Function**: `apply_spatial_relation(geometry, relation, buffer_config, geometry_format="geojson")`
 - **Operations**:
   - **Containment**: Passthrough (exact boundary)
   - **Buffer**: Positive (expand), Negative (erode), Ring (donut)
   - **Directional**: Angular sector wedges (e.g., North = 90° wedge)
-- **Technology**: Uses `shapely` + `pyproj` internally, IO is standard WGS84 GeoJSON.
+- **Technology**: Uses `shapely` + `pyproj` internally, input is WGS84 GeoJSON; output format is configurable (`"geojson"` dict, `"wkt"` string, or `"wkb"` hex string).
 
 ---
 

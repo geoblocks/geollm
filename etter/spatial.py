@@ -15,7 +15,8 @@ from shapely.geometry.linestring import LineString
 from shapely.geometry.polygon import Polygon
 from shapely.ops import linemerge, unary_union
 
-from .models import BufferConfig, SpatialRelation
+from .geometry_format import convert_geometry
+from .models import BufferConfig, GeometryFormat, SpatialRelation
 from .spatial_config import SpatialRelationConfig
 
 _DEFAULT_SPATIAL_CONFIG = SpatialRelationConfig()  # Module-level singleton for default spatial relation configuration.
@@ -26,7 +27,8 @@ def apply_spatial_relation(
     relation: SpatialRelation,
     buffer_config: BufferConfig | None = None,
     spatial_config: SpatialRelationConfig | None = None,
-) -> dict[str, Any]:
+    geometry_format: GeometryFormat = "geojson",
+) -> dict[str, Any] | str:
     """
     Transform a reference geometry according to a spatial relation.
 
@@ -43,9 +45,11 @@ def apply_spatial_relation(
         spatial_config: Spatial relation registry used to look up directional angles.
             Defaults to the module-level singleton; pass an explicit instance to
             avoid repeated construction when calling from a hot path.
+        geometry_format: Output format for the geometry. "geojson" (default) returns a
+            GeoJSON dict, "wkt" returns a WKT string, "wkb" returns a hex-encoded WKB string.
 
     Returns:
-        Transformed GeoJSON geometry dict in WGS84.
+        Transformed geometry in the requested format (GeoJSON dict, WKT string, or WKB hex string).
 
     Raises:
         ValueError: If buffer_config is missing for buffer/directional relations,
@@ -53,11 +57,19 @@ def apply_spatial_relation(
 
     Examples:
         >>> from etter.models import SpatialRelation, BufferConfig
-        >>> # Circular buffer
+        >>> # Circular buffer as GeoJSON (default)
         >>> result = apply_spatial_relation(
         ...     geometry={"type": "Point", "coordinates": [6.63, 46.52]},
         ...     relation=SpatialRelation(relation="near", category="buffer"),
         ...     buffer_config=BufferConfig(distance_m=5000, buffer_from="center"),
+        ... )
+
+        >>> # Same buffer as WKT
+        >>> result = apply_spatial_relation(
+        ...     geometry={"type": "Point", "coordinates": [6.63, 46.52]},
+        ...     relation=SpatialRelation(relation="near", category="buffer"),
+        ...     buffer_config=BufferConfig(distance_m=5000, buffer_from="center"),
+        ...     geometry_format="wkt",
         ... )
 
         >>> # Containment (passthrough)
@@ -67,11 +79,11 @@ def apply_spatial_relation(
         ... )
     """
     if relation.category == "containment":
-        return _apply_containment(geometry)
+        result = _apply_containment(geometry)
     elif relation.category == "buffer":
         if buffer_config is None:
             raise ValueError(f"Buffer relation '{relation.relation}' requires buffer_config")
-        return _apply_buffer(geometry, buffer_config)
+        result = _apply_buffer(geometry, buffer_config)
     elif relation.category == "directional":
         if buffer_config is None:
             raise ValueError(f"Directional relation '{relation.relation}' requires buffer_config")
@@ -79,9 +91,11 @@ def apply_spatial_relation(
         relation_config = cfg.get_config(relation.relation)
         direction = relation_config.direction_angle_degrees or 0
         sector_angle = relation_config.sector_angle_degrees or 90
-        return _apply_directional(geometry, buffer_config, direction, sector_angle)
+        result = _apply_directional(geometry, buffer_config, direction, sector_angle)
     else:
         raise ValueError(f"Unknown relation category: '{relation.category}'")
+
+    return convert_geometry(result, geometry_format)
 
 
 def _apply_containment(geometry: dict[str, Any]) -> dict[str, Any]:
