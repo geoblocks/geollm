@@ -5,9 +5,16 @@ Queries are forwarded to every registered source and results are merged,
 deduplicating by (name, type) while preserving original ordering.
 """
 
+from typing import Protocol, runtime_checkable
+
 from geojson import Feature
 
 from .protocol import GeoDataSource
+
+
+@runtime_checkable
+class _Preloadable(Protocol):
+    def preload(self) -> None: ...
 
 
 class CompositeDataSource:
@@ -34,6 +41,12 @@ class CompositeDataSource:
         if not sources:
             raise ValueError("At least one datasource is required.")
         self._sources: list[GeoDataSource] = list(sources)
+
+    def preload(self) -> None:
+        """Eagerly load all sources that support preloading."""
+        for source in self._sources:
+            if isinstance(source, _Preloadable):
+                source.preload()
 
     # Public API (mirrors GeoDataSource protocol)
 

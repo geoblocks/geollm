@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 import json
 import logging
@@ -31,6 +32,7 @@ geo_mcp = FastMCP("etter MCP Server", stateless_http=True, json_response=True)
 
 @contextlib.asynccontextmanager
 async def lifespan(_app: FastAPI):
+    await asyncio.to_thread(datasource.preload)
     async with geo_mcp.session_manager.run():
         yield
 
