@@ -241,26 +241,24 @@ def _to_json_value(val: Any) -> str | float | int | bool | None:
     return val
 
 
-def _commune_type(row: pd.Series) -> str:
-    """Derive municipality vs. city from chef-lieu boolean flags."""
-    for flag in ("capitale_d_etat", "chef_lieu_de_region", "chef_lieu_de_departement", "chef_lieu_d_arrondissement"):
-        if flag in row.index and str(row[flag]).strip().lower() == "true":
-            return "city"
-    return "municipality"
-
-
-def _derive_type(row: pd.Series, cfg: dict[str, Any]) -> str:
-    """Return the normalized type for a single row given its layer config."""
+def _assign_type_col(gdf: gpd.GeoDataFrame, cfg: dict[str, Any]) -> None:
+    """Assign the _TYPE_COL column using vectorized operations."""
     if cfg.get("commune_flags"):
-        return _commune_type(row)
-    if cfg.get("fixed_type"):
-        return cfg["fixed_type"]
-    type_col: str | None = cfg.get("type_col")
-    type_map: dict[str, str] | None = cfg.get("type_map")
-    if type_col and type_map:
-        raw = str(row.get(type_col, "")) if pd.notna(row.get(type_col)) else ""
-        return type_map.get(raw, "unknown")
-    return "unknown"
+        flags = ["capitale_d_etat", "chef_lieu_de_region", "chef_lieu_de_departement", "chef_lieu_d_arrondissement"]
+        present = [f for f in flags if f in gdf.columns]
+        if present:
+            is_city = pd.concat([gdf[f].astype(str).str.strip().str.lower() == "true" for f in present], axis=1).any(
+                axis=1
+            )
+        else:
+            is_city = pd.Series(False, index=gdf.index)
+        gdf[_TYPE_COL] = is_city.map({True: "city", False: "municipality"})
+    elif fixed := cfg.get("fixed_type"):
+        gdf[_TYPE_COL] = fixed
+    elif (type_col := cfg.get("type_col")) and (type_map := cfg.get("type_map")):
+        gdf[_TYPE_COL] = gdf[type_col].astype(str).map(type_map).fillna("unknown")
+    else:
+        gdf[_TYPE_COL] = "unknown"
 
 
 class IGNBDCartoSource:
@@ -292,6 +290,11 @@ class IGNBDCartoSource:
         self._data_path = Path(data_path)
         self._gdf: gpd.GeoDataFrame | None = None
         self._name_index: dict[str, list[int]] = {}
+        self._token_index: dict[str, set[str]] = {}
+
+    def preload(self) -> None:
+        """Eagerly load data. Call at startup to avoid first-query latency."""
+        self._ensure_loaded()
 
     def _ensure_loaded(self) -> None:
         if self._gdf is not None:
@@ -303,6 +306,7 @@ class IGNBDCartoSource:
             self._gdf = self._load_from_directory()
         else:
             self._gdf = self._load_from_file(self._data_path)
+
         self._build_name_index()
 
     def _load_from_file(self, path: Path) -> gpd.GeoDataFrame:
@@ -320,7 +324,7 @@ class IGNBDCartoSource:
             if name_col not in rows.columns:
                 continue
             rows[_NAME_COL] = rows[name_col].astype(str)
-            rows[_TYPE_COL] = rows.apply(lambda row, c=cfg: _derive_type(row, c), axis=1)
+            _assign_type_col(rows, cfg)
             rows = rows.to_crs("EPSG:4326")
             gdfs.append(rows)
 
@@ -346,7 +350,7 @@ class IGNBDCartoSource:
                 continue
 
             gdf[_NAME_COL] = gdf[name_col].astype(str)
-            gdf[_TYPE_COL] = gdf.apply(lambda row, c=cfg: _derive_type(row, c), axis=1)
+            _assign_type_col(gdf, cfg)
             gdf["_layer"] = layer_name
             gdf = gdf.to_crs("EPSG:4326")
 
@@ -362,9 +366,10 @@ class IGNBDCartoSource:
         return gpd.GeoDataFrame(combined, crs="EPSG:4326", geometry="geometry")
 
     def _build_name_index(self) -> None:
-        """Build normalized name → row indices lookup (with article-stripped variants)."""
+        """Build normalized name → row indices and token → candidate names indexes."""
         assert self._gdf is not None
         self._name_index = {}
+        self._token_index = {}
         for idx, name in enumerate(self._gdf[_NAME_COL]):
             if not isinstance(name, str) or not name.strip() or name == "nan":
                 continue
@@ -372,6 +377,10 @@ class IGNBDCartoSource:
                 if key not in self._name_index:
                     self._name_index[key] = []
                 self._name_index[key].append(idx)
+                for token in key.split():
+                    if token not in self._token_index:
+                        self._token_index[token] = set()
+                    self._token_index[token].add(key)
 
     def _row_to_feature(self, idx: int) -> Feature:
         """Convert a GeoDataFrame row to a GeoJSON Feature dict (WGS84)."""
@@ -451,16 +460,17 @@ class IGNBDCartoSource:
         return features[:max_results]
 
     def _fuzzy_search(self, normalized: str, threshold: float = 75.0) -> list[int]:
-        """Token-overlap + token_set_ratio fuzzy search."""
-        matches: list[tuple[int, float]] = []
-        query_tokens = set(normalized.split())
+        """Fuzzy search using a token inverted index for fast candidate pre-filtering."""
+        candidates: set[str] = set()
+        for token in normalized.split():
+            candidates |= self._token_index.get(token, set())
 
-        for indexed_name, indices in self._name_index.items():
-            if query_tokens & set(indexed_name.split()):
-                score = fuzz.token_set_ratio(normalized, indexed_name)
-                if score >= threshold:
-                    for idx in indices:
-                        matches.append((idx, score))
+        matches: list[tuple[int, float]] = []
+        for name in candidates:
+            score = fuzz.token_set_ratio(normalized, name)
+            if score >= threshold:
+                for idx in self._name_index[name]:
+                    matches.append((idx, score))
 
         matches.sort(key=lambda x: x[1], reverse=True)
         return [idx for idx, _ in matches]

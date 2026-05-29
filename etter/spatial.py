@@ -7,7 +7,8 @@ Shapely is used internally for geometry operations.
 """
 
 from pyproj import Geod, Transformer
-from shapely.geometry import MultiLineString, box, mapping, shape
+from shapely import clip_by_rect
+from shapely.geometry import MultiLineString, mapping, shape
 from shapely.geometry.base import BaseGeometry
 from shapely.geometry.linestring import LineString
 from shapely.geometry.polygon import Polygon
@@ -185,15 +186,13 @@ def _apply_clipping(geom: BaseGeometry, clip_direction: str) -> GeoJsonGeometry:
     midy = (miny + maxy) / 2
 
     if clip_direction == "north":
-        clip_box = box(minx, midy, maxx, maxy)
+        clipped = clip_by_rect(geom, minx, midy, maxx, maxy)
     elif clip_direction == "south":
-        clip_box = box(minx, miny, maxx, midy)
+        clipped = clip_by_rect(geom, minx, miny, maxx, midy)
     elif clip_direction == "east":
-        clip_box = box(midx, miny, maxx, maxy)
+        clipped = clip_by_rect(geom, midx, miny, maxx, maxy)
     else:  # west
-        clip_box = box(minx, miny, midx, maxy)
-
-    clipped = geom.intersection(clip_box)
+        clipped = clip_by_rect(geom, minx, miny, midx, maxy)
 
     if clipped.is_empty:
         return mapping(geom)  # Fallback — should never happen for a valid half-plane clip
