@@ -14,3 +14,13 @@ repos:
         args:
           - --fix
       - id: ruff-format
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty
+        language: system
+        entry: bash
+        files: etter/
+        types: [python]
+        args: [-c, 'uv run ty check etter/']
+        pass_filenames: false
