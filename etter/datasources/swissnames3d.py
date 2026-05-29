@@ -12,17 +12,13 @@ from pathlib import Path
 from typing import Any
 
 import geopandas as gpd
-import pyproj
+import pandas as pd
 from geojson import Feature
 from rapidfuzz import fuzz
 from shapely import force_2d
 from shapely.geometry import mapping
-from shapely.ops import transform as shapely_transform
 
 from .location_types import TypeMap, get_matching_types
-
-# CH1903+ (LV95) to WGS84 transformer - data is assumed to always be in EPSG:2056
-_TRANSFORMER = pyproj.Transformer.from_crs("EPSG:2056", "EPSG:4326", always_xy=True)
 
 # Map normalized, grouped types to their OBJEKTART values.
 # Each type groups related OBJEKTART values (e.g., lake groups: See, Seeteil).
@@ -186,6 +182,15 @@ class SwissNames3DSource:
         self._layer = layer
         self._gdf: gpd.GeoDataFrame | None = None
         self._name_index: dict[str, list[int]] = {}
+        self._token_index: dict[str, set[str]] = {}
+        self._name_col: str = ""
+        self._type_col: str | None = None
+        self._id_col: str | None = None
+        self._extra_cols: list[str] = []
+
+    def preload(self) -> None:
+        """Eagerly load data. Call at startup to avoid first-query latency."""
+        self._ensure_loaded()
 
     def _ensure_loaded(self) -> None:
         """Load data lazily on first access."""
@@ -195,15 +200,33 @@ class SwissNames3DSource:
 
     def _load_data(self) -> None:
         """Load SwissNames3D data and build the name index."""
-        # Check if data_path is a directory
         if self._data_path.is_dir():
             self._load_from_directory()
         else:
-            # Load single file
             kwargs: dict[str, Any] = {}
             if self._layer is not None:
                 kwargs["layer"] = self._layer
             self._gdf = gpd.read_file(str(self._data_path), **kwargs)
+
+        assert self._gdf is not None
+
+        # Drop Z coordinates once — vectorized; the source has LN02 height and
+        # single_sided buffers reject 3D geometries
+        self._gdf.geometry = force_2d(self._gdf.geometry.values)
+
+        # Reproject to WGS84 once — avoids per-query coordinate transform
+        self._gdf = self._gdf.to_crs("EPSG:4326")
+
+        # Cache column names once — reused on every _row_to_feature() call
+        self._name_col = self._detect_name_column()
+        self._type_col = self._detect_type_column()
+        self._id_col = self._detect_id_column()
+        skip = {self._name_col, "geometry"}
+        if self._type_col:
+            skip.add(self._type_col)
+        if self._id_col:
+            skip.add(self._id_col)
+        self._extra_cols = [c for c in self._gdf.columns if c not in skip]
 
         self._build_name_index()
 
@@ -231,46 +254,49 @@ class SwissNames3DSource:
 
         # Keep only common columns and concatenate
         gdfs_filtered = [gdf[sorted(common_cols)] for gdf in gdfs]
-        self._gdf = gpd.GeoDataFrame(
-            gpd.pd.concat(gdfs_filtered, ignore_index=True), crs=gdfs[0].crs, geometry="geometry"
-        )
+        self._gdf = gpd.GeoDataFrame(pd.concat(gdfs_filtered, ignore_index=True), crs=gdfs[0].crs, geometry="geometry")
 
     def _build_name_index(self) -> None:
-        """Build a normalized name → row indices lookup for fast search."""
+        """Build normalized name → row indices and token → candidate names indexes."""
         assert self._gdf is not None
         self._name_index = {}
+        self._token_index = {}
 
-        name_col = self._detect_name_column()
-        for idx, name in enumerate(self._gdf[name_col]):
+        for idx, name in enumerate(self._gdf[self._name_col]):
             if not isinstance(name, str) or not name.strip():
                 continue
             normalized = _normalize_name(name)
             if normalized not in self._name_index:
                 self._name_index[normalized] = []
             self._name_index[normalized].append(idx)
+            for token in normalized.split():
+                if token not in self._token_index:
+                    self._token_index[token] = set()
+                self._token_index[token].add(normalized)
 
     def _detect_name_column(self) -> str:
         """Detect the name column in the data."""
         assert self._gdf is not None
-        for candidate in ("NAME", "name", "Name", "BEZEICHNUNG"):
-            if candidate in self._gdf.columns:
-                return candidate
+        for col in self._gdf.columns:
+            if col.upper() in ("NAME", "BEZEICHNUNG"):
+                return col
         raise ValueError(f"Cannot find name column in data. Available columns: {list(self._gdf.columns)}")
 
     def _detect_type_column(self) -> str | None:
         """Detect the feature type column in the data."""
         assert self._gdf is not None
-        for candidate in ("OBJEKTART", "objektart", "Objektart"):
-            if candidate in self._gdf.columns:
-                return candidate
+        for col in self._gdf.columns:
+            if col.upper() == "OBJEKTART":
+                return col
         return None
 
     def _detect_id_column(self) -> str | None:
         """Detect the unique ID column in the data."""
         assert self._gdf is not None
-        for candidate in ("UUID", "uuid", "FID", "OBJECTID", "id"):
-            if candidate in self._gdf.columns:
-                return candidate
+        for candidate in ("UUID", "FID", "OBJECTID", "ID"):
+            for col in self._gdf.columns:
+                if col.upper() == candidate:
+                    return col
         return None
 
     def _row_to_feature(self, idx: int) -> Feature:
@@ -278,49 +304,32 @@ class SwissNames3DSource:
         assert self._gdf is not None
         row = self._gdf.iloc[idx]
 
-        # Get name
-        name_col = self._detect_name_column()
-        name = str(row[name_col])
+        name = str(row[self._name_col])
 
-        # Get type
-        type_col = self._detect_type_column()
-        raw_type = str(row[type_col]) if type_col and row.get(type_col) else "unknown"
+        raw_type = str(row[self._type_col]) if self._type_col and row.get(self._type_col) else "unknown"
         normalized_type = _objektart_to_type(raw_type)
 
-        # Get ID
-        id_col = self._detect_id_column()
-        feature_id = str(row[id_col]) if id_col and row.get(id_col) else str(idx)
+        feature_id = str(row[self._id_col]) if self._id_col and row.get(self._id_col) else str(idx)
 
-        # Convert geometry to WGS84 GeoJSON
+        # Geometry is already in WGS84 (2D) — pre-converted at load time
         geom = row.geometry
         if geom is None or geom.is_empty:
             geometry = {"type": "Point", "coordinates": [0, 0]}
             bbox = None
         else:
-            # Transform geometry from EPSG:2056 to WGS84 using the module-level transformer
-            # Drop Z coordinates — they are not needed and cause issues with single_sided buffers
-            wgs84_geom = shapely_transform(_TRANSFORMER.transform, force_2d(geom))
-            geometry = mapping(wgs84_geom)
-            bounds = wgs84_geom.bounds  # (minx, miny, maxx, maxy)
+            geometry = mapping(geom)
+            bounds = geom.bounds
             bbox = (bounds[0], bounds[1], bounds[2], bounds[3])
-
-        # Collect extra properties
-        skip_cols = {name_col, "geometry"}
-        if type_col:
-            skip_cols.add(type_col)
-        if id_col:
-            skip_cols.add(id_col)
 
         properties: dict[str, Any] = {
             "name": name,
             "type": normalized_type,
             "confidence": 1.0,
         }
-        for col in self._gdf.columns:
-            if col not in skip_cols:
-                val = row.get(col)
-                if val is not None and str(val) != "nan":
-                    properties[col] = val
+        for col in self._extra_cols:
+            val = row.get(col)
+            if val is not None and str(val) != "nan":
+                properties[col] = val
 
         return Feature(geometry=geometry, properties=properties, id=feature_id, bbox=bbox)
 
@@ -373,37 +382,23 @@ class SwissNames3DSource:
 
     def _fuzzy_search(self, normalized: str, threshold: float = 75.0) -> list[int]:
         """
-        Fuzzy search for names that partially match the search query.
+        Fuzzy search using a token inverted index for fast candidate pre-filtering.
 
-        Uses token matching to find results where at least one token from the
-        query matches a token in the indexed name. This handles cases like:
-        - "venoge" matching "la venoge"
-        - "rhone" matching "rhone valais"
-
-        Args:
-            normalized: The normalized search query.
-            threshold: Minimum fuzzy match score (0-100) to include a result.
-
-        Returns:
-            List of row indices for fuzzy-matched names, sorted by score (descending).
+        Looks up each query token in _token_index to find only the indexed names
+        that share at least one token, then scores those candidates with
+        token_set_ratio. Misses (no shared tokens) return instantly at O(1).
         """
+        candidates: set[str] = set()
+        for token in normalized.split():
+            candidates |= self._token_index.get(token, set())
+
         matches: list[tuple[int, float]] = []
-        query_tokens = set(normalized.split())
+        for name in candidates:
+            score = fuzz.token_set_ratio(normalized, name)
+            if score >= threshold:
+                for idx in self._name_index[name]:
+                    matches.append((idx, score))
 
-        for indexed_name, indices in self._name_index.items():
-            indexed_tokens = set(indexed_name.split())
-
-            # Check if any query token matches any indexed token
-            token_overlap = query_tokens & indexed_tokens
-
-            if token_overlap:
-                # Also use token_set_ratio for better matching of partial strings
-                score = fuzz.token_set_ratio(normalized, indexed_name)
-                if score >= threshold:
-                    for idx in indices:
-                        matches.append((idx, score))
-
-        # Sort by score (descending) to return best matches first
         matches.sort(key=lambda x: x[1], reverse=True)
         return [idx for idx, _ in matches]
 
@@ -420,9 +415,8 @@ class SwissNames3DSource:
         self._ensure_loaded()
         assert self._gdf is not None
 
-        id_col = self._detect_id_column()
-        if id_col:
-            matches = self._gdf[self._gdf[id_col].astype(str) == feature_id]
+        if self._id_col:
+            matches = self._gdf[self._gdf[self._id_col].astype(str) == feature_id]
             if not matches.empty:
                 return self._row_to_feature(matches.index[0])
 
